@@ -14,20 +14,15 @@ import scala.util.Success
 object Main extends App {
   val system = ActorSystem("ProcessEasy")
   val process = system.actorOf(WalkInThePark.props, "processEasy")
-  //process ! ProcessEasy.Start(new java.util.Date)
   println("Started")
   Thread.sleep(500)
-  process  ! "Start"
+  process ! "Start"
   import system.dispatcher
-  //future {
-   // Thread.sleep(5000)
-   // system.shutdown()
-   //
-import scala.concurrent.duration._
-  try {system.awaitTermination(10 seconds)}
+  import scala.concurrent.duration._
+  try { system.awaitTermination(10 seconds) }
   catch {
     case _: TimeoutException =>
-    system.shutdown()
+      system.shutdown()
   }
 
 }
@@ -41,9 +36,8 @@ trait ProcessStep[S] {
   val promise: Promise[Unit] = Promise[Unit]()
   val future = promise.future
 
-  def ~>(next: ProcessStep[S]*): ProcessStep[S] = {
-    new Chain(this, next:_*)
-  }
+  def ~>(next: ProcessStep[S]*): ProcessStep[S] = new Chain(this, next: _*)
+
   def execute(): S => Unit
 
   def run()(implicit process: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
@@ -59,8 +53,8 @@ trait ProcessStep[S] {
 
 class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*) extends ProcessStep[S] {
   override def run()(implicit self: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
-    a.run() flatMap{_ =>
-      Future.sequence(b.map(_.run())).flatMap{_ =>
+    a.run() flatMap { _ =>
+      Future.sequence(b.map(_.run())).flatMap { _ =>
         promise.trySuccess(())
         future
       }
@@ -69,7 +63,7 @@ class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*) extends ProcessStep[S] {
 
   def execute() = throw new UnsupportedOperationException("Please invoke run")
 
-  def complete: PartialFunction[Any, Unit] = a.complete orElse b.foldRight(PartialFunction.empty[Any, Unit]){case (x, y) => x.complete orElse y}
+  def complete: PartialFunction[Any, Unit] = a.complete orElse b.foldRight(PartialFunction.empty[Any, Unit]) { case (x, y) => x.complete orElse y }
 }
 
 case class PrintStep(output: String, sleep: Long) extends ProcessStep[Int] {
@@ -94,7 +88,7 @@ class WalkInThePark extends Actor {
   val process: ProcessStep[Int] =
     step1 ~> step2 ~> (PrintStep("Stap 2", 1500), PrintStep("Stap 3", 100)) ~> PrintStep("Done", 50)
 
-  process.future.foreach{_ =>
+  process.future.foreach { _ =>
     context.system.shutdown()
   }
 
