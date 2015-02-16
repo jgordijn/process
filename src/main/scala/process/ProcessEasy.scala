@@ -24,7 +24,6 @@ object Main extends App {
     case _: TimeoutException =>
       system.shutdown()
   }
-
 }
 
 object Process {
@@ -35,11 +34,10 @@ object Process {
 trait ProcessStep[S] {
   val promise: Promise[Unit] = Promise[Unit]()
   val future = promise.future
+  def execute(): S => Unit
+  def complete: PartialFunction[Any, Unit]
 
   def ~>(next: ProcessStep[S]*): ProcessStep[S] = new Chain(this, next: _*)
-
-  def execute(): S => Unit
-
   def run()(implicit process: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
     import akka.pattern.ask
     import scala.concurrent.duration._
@@ -48,7 +46,6 @@ trait ProcessStep[S] {
     if (!promise.isCompleted) (process ? Process.GetState).mapTo[S].foreach(execute())
     future
   }
-  def complete: PartialFunction[Any, Unit]
 }
 
 class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*) extends ProcessStep[S] {
@@ -60,9 +57,7 @@ class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*) extends ProcessStep[S] {
       }
     }
   }
-
   def execute() = throw new UnsupportedOperationException("Please invoke run")
-
   def complete: PartialFunction[Any, Unit] = a.complete orElse b.foldRight(PartialFunction.empty[Any, Unit]) { case (x, y) => x.complete orElse y }
 }
 
