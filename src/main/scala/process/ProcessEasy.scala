@@ -99,7 +99,15 @@ object WalkInThePark {
   def props = Props(new WalkInThePark)
 }
 
-class WalkInThePark extends Actor {
+trait Process[State] extends Actor {
+  def process: ProcessStep[State]
+  override def unhandled(msg: Any): Unit = msg match {
+    case x if process.doComplete.isDefinedAt(x) =>
+      process.doComplete(x)
+  }
+}
+
+class WalkInThePark extends Process[Int] {
   import context.dispatcher
   var nrOfCalls = 0
   val step1 = PrintStep("Stap 1", 500)
@@ -121,7 +129,5 @@ class WalkInThePark extends Actor {
       println("START")
       process.run()
     case Process.GetState => sender() ! nrOfCalls
-    case msg =>
-      process.doComplete(msg)
   }
 }
