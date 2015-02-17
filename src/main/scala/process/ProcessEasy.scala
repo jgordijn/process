@@ -26,31 +26,6 @@ object Main extends App {
   }
 }
 
-object Process {
-  case class Perform[S](action: S ⇒ Unit)
-  case object GetState
-}
-
-trait ProcessStep[S] {
-  val promise: Promise[Unit] = Promise[Unit]()
-  val future = promise.future
-  def execute()(implicit process: ActorRef): S => Unit
-  def complete: PartialFunction[Any, Unit]
-  def doComplete: PartialFunction[Any, Unit] = {
-    case x if !future.isCompleted => complete(x)
-  }
-
-  def ~>(next: ProcessStep[S]*): ProcessStep[S] = new Chain(this, next: _*)
-  def run()(implicit process: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
-    import akka.pattern.ask
-    import scala.concurrent.duration._
-    implicit val timeout: Timeout = 5 seconds
-
-    if (!promise.isCompleted) (process ? Process.GetState).mapTo[S].foreach(execute())
-    future
-  }
-}
-
 class EchoActor extends Actor with ActorLogging {
   import scala.concurrent.duration._
   import context.dispatcher
@@ -61,24 +36,13 @@ class EchoActor extends Actor with ActorLogging {
   }
 }
 
-class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*) extends ProcessStep[S] {
-  override def run()(implicit self: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
-    a.run() flatMap { _ =>
-      Future.sequence(b.map(_.run())).flatMap { _ =>
-        promise.trySuccess(())
-        future
-      }
-    }
-  }
-  def execute()(implicit process: ActorRef) = throw new UnsupportedOperationException("This is a chain. It does not execute by itself. Please invoke run.")
-  def complete: PartialFunction[Any, Unit] = a.doComplete orElse b.foldRight(PartialFunction.empty[Any, Unit]) { case (x, y) => x.doComplete orElse y }
-}
 
 case class Completed(message: String)
 case class EchoStep(echoer: ActorRef) extends ProcessStep[Int] {
   def execute()(implicit process: ActorRef) = state => {
     echoer ! s"This is my message: $state"
   }
+
   def complete = {
     case retVal: String if retVal.contains("This is my message") =>
       println(s"${new java.util.Date} Completing this $this")
@@ -99,23 +63,15 @@ object WalkInThePark {
   def props = Props(new WalkInThePark)
 }
 
-trait Process[State] extends Actor {
-  def process: ProcessStep[State]
-  override def unhandled(msg: Any): Unit = msg match {
-    case x if process.doComplete.isDefinedAt(x) =>
-      process.doComplete(x)
-  }
-}
 
 class WalkInThePark extends Process[Int] {
   import context.dispatcher
-  var nrOfCalls = 0
+  var state = 0
   val step1 = PrintStep("Stap 1", 500)
   val step2 = PrintStep("FOOOOO", 300)
   val echoer = context.actorOf(Props(new EchoActor), "echoer")
   val echo = EchoStep(echoer)
   val echo2 = EchoStep(echoer)
-
 
   val process: ProcessStep[Int] =
     step1 ~> step2 ~> echo ~> echo2  ~> (PrintStep("Stap 2", 2500), PrintStep("Stap 3", 100)) ~> PrintStep("Done", 50)
@@ -128,6 +84,5 @@ class WalkInThePark extends Process[Int] {
     case "Start" =>
       println("START")
       process.run()
-    case Process.GetState => sender() ! nrOfCalls
   }
 }
