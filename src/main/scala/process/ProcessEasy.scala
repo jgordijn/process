@@ -40,6 +40,7 @@ class EchoActor extends Actor with ActorLogging {
 case class Completed(message: String)
 case class EchoStep(echoer: ActorRef) extends ProcessStep[Int] {
   def execute()(implicit process: ActorRef) = state => {
+    println(s"Execute echostep: $state")
     echoer ! s"This is my message: $state"
   }
 
@@ -47,6 +48,8 @@ case class EchoStep(echoer: ActorRef) extends ProcessStep[Int] {
     case retVal: String if retVal.contains("This is my message") =>
       println(s"${new java.util.Date} Completing this $this")
       promise.success(())
+
+      {i => i + 1}
   }
 }
 

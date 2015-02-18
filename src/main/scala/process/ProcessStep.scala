@@ -12,8 +12,8 @@ trait ProcessStep[S] {
   val promise: Promise[Unit] = Promise[Unit]()
   val future = promise.future
   def execute()(implicit process: ActorRef): S => Unit
-  def complete: PartialFunction[Any, Unit]
-  def doComplete: PartialFunction[Any, Unit] = if(future.isCompleted) PartialFunction.empty[Any, Unit] else complete
+  def complete: PartialFunction[Any, S => S]
+  def doComplete: PartialFunction[Any, S => S] = if(future.isCompleted) PartialFunction.empty[Any, S => S] else complete
 
   def ~>(next: ProcessStep[S]*): ProcessStep[S] = new Chain(this, next: _*)
   def run()(implicit process: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
