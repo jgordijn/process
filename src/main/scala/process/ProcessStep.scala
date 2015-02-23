@@ -11,8 +11,10 @@ trait ProcessStep[S] {
   val promise: Promise[Unit] = Promise[Unit]()
   def isCompleted = promise.isCompleted
   def execute()(implicit process: ActorRef): S => Unit
-  def complete: PartialFunction[Any, S => S]
-  def getUpdateStateAction: PartialFunction[Any, S => S] = if(promise.future.isCompleted) PartialFunction.empty[Any, S => S] else complete
+  def receiveCommand: PartialFunction[Any, Process.Event]
+  def updateState: PartialFunction[Process.Event, S => S]
+  def handleUpdateState: PartialFunction[Process.Event, S => S] = if(promise.future.isCompleted) PartialFunction.empty[Process.Event, S => S] else updateState
+  def handleReceiveCommand: PartialFunction[Any, Process.Event] = if(promise.future.isCompleted) PartialFunction.empty[Any, Process.Event] else receiveCommand
   def markDone(): Unit = promise.trySuccess(())
 
   def ~>(next: ProcessStep[S]*): ProcessStep[S] = new Chain(this, next: _*)
