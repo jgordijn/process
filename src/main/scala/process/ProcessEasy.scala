@@ -55,7 +55,7 @@ case class EchoStep(echoer: ActorRef) extends ProcessStep[Int] {
 
 case class PrintStep(output: String, sleep: Long) extends ProcessStep[Int] {
   def execute()(implicit process: ActorRef) = state => {
-    println(s"${new java.util.Date} Step is executed with output: $output ($sleep) STATE: $state ${future.isCompleted}")
+    println(s"${new java.util.Date} Step is executed with output: $output ($sleep) STATE: $state ${promise.future.isCompleted}")
     Thread.sleep(sleep)
     promise.success(())
   }
@@ -79,9 +79,9 @@ class WalkInThePark extends Process[Int] {
   val process: ProcessStep[Int] =
     step1 ~> step2 ~> echo ~> echo2  ~> (PrintStep("Stap 2", 2500), PrintStep("Stap 3", 100)) ~> PrintStep("Done", 50)
 
-  process.future.foreach { _ =>
+  process.promise.future.foreach { _ =>
     context.system.shutdown()
-  }
+ }
 
   def receive = {
     case "Start" =>

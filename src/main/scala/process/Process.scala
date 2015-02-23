@@ -25,7 +25,7 @@ private class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*) extends ProcessSte
     a.run() flatMap { _ =>
       Future.sequence(b.map(_.run())).flatMap { _ =>
         promise.trySuccess(())
-        future
+        promise.future
       }
     }
   }

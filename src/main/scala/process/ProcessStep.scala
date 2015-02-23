@@ -7,13 +7,14 @@ import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
 
-
 trait ProcessStep[S] {
   val promise: Promise[Unit] = Promise[Unit]()
-  val future = promise.future
+  def isCompleted = promise.isCompleted
   def execute()(implicit process: ActorRef): S => Unit
   def complete: PartialFunction[Any, S => S]
-  def doComplete: PartialFunction[Any, S => S] = if(future.isCompleted) PartialFunction.empty[Any, S => S] else complete
+  // TODO: Rename doComplete to getUpdateStateAction
+  def doComplete: PartialFunction[Any, S => S] = if(promise.future.isCompleted) PartialFunction.empty[Any, S => S] else complete
+  def markDone(): Unit = promise.trySuccess(())
 
   def ~>(next: ProcessStep[S]*): ProcessStep[S] = new Chain(this, next: _*)
   def run()(implicit process: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
@@ -22,6 +23,6 @@ trait ProcessStep[S] {
     implicit val timeout: Timeout = 5 seconds
 
     if (!promise.isCompleted) (process ? Process.GetState).mapTo[S].foreach(execute())
-    future
+    promise.future
   }
 }
