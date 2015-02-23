@@ -63,7 +63,7 @@ class ProcessStepTest extends TestKit(ActorSystem("ProcessStepTest"))
       val step = testStep(executeProbe.ref)
 
       // WHEN
-      val updateStateFunction = step.doComplete(Complete)
+      val updateStateFunction = step.getUpdateStateAction(Complete)
 
       // THEN
       step.isCompleted shouldBe false
@@ -81,11 +81,11 @@ class ProcessStepTest extends TestKit(ActorSystem("ProcessStepTest"))
       val step = testStep(executeProbe.ref)
 
       // WHEN
-      step.doComplete(Complete)(3)
+      step.getUpdateStateAction(Complete)(3)
 
       // AND THEN
       intercept[MatchError] {
-        step.doComplete(Complete)
+        step.getUpdateStateAction(Complete)
       }
     }
   }

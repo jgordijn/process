@@ -12,8 +12,7 @@ trait ProcessStep[S] {
   def isCompleted = promise.isCompleted
   def execute()(implicit process: ActorRef): S => Unit
   def complete: PartialFunction[Any, S => S]
-  // TODO: Rename doComplete to getUpdateStateAction
-  def doComplete: PartialFunction[Any, S => S] = if(promise.future.isCompleted) PartialFunction.empty[Any, S => S] else complete
+  def getUpdateStateAction: PartialFunction[Any, S => S] = if(promise.future.isCompleted) PartialFunction.empty[Any, S => S] else complete
   def markDone(): Unit = promise.trySuccess(())
 
   def ~>(next: ProcessStep[S]*): ProcessStep[S] = new Chain(this, next: _*)
