@@ -1,12 +1,11 @@
 package process
 
 import scala.concurrent.duration._
-import akka.actor.Props
-import akka.actor.{ ActorRef, ActorSystem }
+import akka.actor.{ ActorRef, ActorSystem, Props }
 import akka.testkit.{ ImplicitSender, TestActor, TestKit, TestProbe }
 
 import org.scalatest._
-import matchers.ShouldMatchers._
+import org.scalatest.matchers.ShouldMatchers._
 import org.scalatest.concurrent.Eventually
 
 class ProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
