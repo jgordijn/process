@@ -32,7 +32,6 @@ object ProcessTest {
 
   class Process1(service: ActorRef) extends Process[Int] {
     import context.dispatcher
-    val ac = context
     var state = 0
     val process = new MockStep(service)
 
