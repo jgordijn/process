@@ -1,21 +1,28 @@
 package process
 
+import akka.actor.Actor
+import akka.actor.ActorContext
+import akka.actor.ActorContext
+import akka.actor.Props
 import akka.actor.{ ActorRef, ActorSystem }
 import akka.testkit.{ ImplicitSender, TestActor, TestKit, TestProbe }
 
 import org.scalatest._
 import matchers.ShouldMatchers._
+import scala.concurrent.Await
 
 object ProcessStepTest {
   case object Completed extends Process.Event
   case object Response
-  case object Command
-  def testStep(executeProbe: ActorRef) = new ProcessStep[Int] {
+  case class Command(state: Int)
+  def testStep(executeProbe: ActorRef)(implicit _actorContext: ActorContext) = new ProcessStep[Int] {
+    implicit def context = _actorContext
     def execute()(implicit process: ActorRef): Int => Unit = { state =>
-      executeProbe ! Command
+      executeProbe ! Command(state)
     }
     def receiveCommand: PartialFunction[Any, Process.Event] = {
-      case Response => Completed
+      case Response =>
+        Completed
     }
     def updateState = {
       case Completed => { state =>
@@ -42,7 +49,7 @@ class ProcessStepTest extends TestKit(ActorSystem("ProcessStepTest"))
       def run(sender: ActorRef, msg: Any): TestActor.AutoPilot =
         msg match {
           case Process.GetState ⇒ sender ! state; TestActor.KeepRunning
-          case Response => testActor ! Response; TestActor.KeepRunning
+          case Completed => testActor ! Completed; TestActor.KeepRunning
         }
     })
     processProbe
@@ -52,7 +59,9 @@ class ProcessStepTest extends TestKit(ActorSystem("ProcessStepTest"))
     serviceMockProbe.setAutoPilot(new TestActor.AutoPilot {
       def run(sender: ActorRef, msg: Any): TestActor.AutoPilot = {
         msg match {
-          case Command => sender ! Response; TestActor.NoAutoPilot
+          case cmd: Command =>
+            sender ! Response
+            TestActor.NoAutoPilot
         }
       }
     })
@@ -64,15 +73,26 @@ class ProcessStepTest extends TestKit(ActorSystem("ProcessStepTest"))
       // GIVEN
       val processProbe = processProbeWithState(432)
       val serviceMockProbe = createServiceMockProbe
-      val step = testStep(serviceMockProbe.ref)
+
+      case object GetStep
+      val parent = system.actorOf(Props(new Actor {
+        val step = testStep(serviceMockProbe.ref)
+        def receive = {
+          case x if sender() == step =>
+            testActor forward x
+          case GetStep => sender ! step
+          case e: Process.Event => testActor ! e
+        }
+      }))
+
+      parent ! GetStep
+      val step = expectMsgType[ProcessStep[Int]]
 
       // Execute the logic (do call)
       val future = step.run()(processProbe.ref, system.dispatcher, scala.reflect.classTag[Int])
-      expectMsg(Response)
-
+      //Await.result(future, 3 seconds)
       // When response is received by process, it will send this to the steps, so they can handle it
-      val event = step.handleReceiveCommand(Response)
-      event should be (Completed)
+      val event = expectMsg(Completed)
       step.isCompleted should not be(true)
 
       // The event can be used to retrieve an updateState function
@@ -86,20 +106,41 @@ class ProcessStepTest extends TestKit(ActorSystem("ProcessStepTest"))
       // GIVEN
       val processProbe = processProbeWithState(432)
       val executeProbe = TestProbe()
-      val step = testStep(executeProbe.ref)
+
+      val parent = system.actorOf(Props(new Actor {
+        val step = testStep(executeProbe.ref)
+        def receive = {
+          case x if sender() == step => testActor forward x
+          case "GET" => sender ! step
+        }
+      }))
+
+      parent ! "GET"
+      val step = expectMsgType[ProcessStep[Int]]
 
       // WHEN
       val future = step.run()(processProbe.ref, system.dispatcher, scala.reflect.classTag[Int])
 
       // THEN
-      executeProbe.expectMsg(Command)
+      executeProbe.expectMsg(Command(432))
       step.isCompleted shouldBe false
     }
     "complete returns an updateState function, which completes the step" in {
       // GIVEN
       val processProbe = processProbeWithState(432)
       val serviceMockProbe = createServiceMockProbe
-      val step = testStep(serviceMockProbe.ref)
+//      val step = testStep(serviceMockProbe.ref)
+      val parent = system.actorOf(Props(new Actor {
+        val step = testStep(serviceMockProbe.ref)
+        def receive = {
+          case x if sender() == step => testActor forward x
+          case "GET" => sender ! step
+        }
+      }))
+
+      parent ! "GET"
+      val step = expectMsgType[ProcessStep[Int]]
+
 
       // WHEN
       val event = step.receiveCommand(Response)
@@ -117,7 +158,18 @@ class ProcessStepTest extends TestKit(ActorSystem("ProcessStepTest"))
       // GIVEN
       val processProbe = processProbeWithState(432)
       val executeProbe = TestProbe()
-      val step = testStep(executeProbe.ref)
+      //val step = testStep(executeProbe.ref)
+      val parent = system.actorOf(Props(new Actor {
+        val step = testStep(executeProbe.ref)
+        def receive = {
+          case x if sender() == step => testActor forward x
+          case "GET" => sender ! step
+        }
+      }))
+
+      parent ! "GET"
+      val step = expectMsgType[ProcessStep[Int]]
+
 
       // WHEN
       step.handleUpdateState(Completed)(3)

@@ -3,7 +3,7 @@ package process
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.reflect.ClassTag
 
-import akka.actor.{ Actor, ActorRef }
+import akka.actor.{ Actor, ActorContext, ActorRef }
 
 object Process {
   case object GetState
@@ -24,7 +24,7 @@ trait Process[State] extends Actor {
   }
 }
 
-private class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*) extends ProcessStep[S] {
+private class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*)(implicit val context: ActorContext) extends ProcessStep[S] {
   override def run()(implicit self: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
     a.run() flatMap { _ =>
       Future.sequence(b.map(_.run())).flatMap { _ =>

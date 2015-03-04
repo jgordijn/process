@@ -39,7 +39,7 @@ class EchoActor extends Actor with ActorLogging {
 
 //case class Completed(message: String)
 case object Echoed extends Process.Event
-case class EchoStep(echoer: ActorRef) extends ProcessStep[Int] {
+case class EchoStep(echoer: ActorRef)(implicit val context: ActorContext) extends ProcessStep[Int] {
   def execute()(implicit process: ActorRef) = state => {
     println(s"Execute echostep: $state")
     echoer ! s"This is my message: $state"
@@ -60,11 +60,11 @@ case class EchoStep(echoer: ActorRef) extends ProcessStep[Int] {
   }
 }
 
-case class PrintStep(output: String, sleep: Long) extends ProcessStep[Int] {
+case class PrintStep(output: String, sleep: Long)(implicit val context: ActorContext) extends ProcessStep[Int] {
   def execute()(implicit process: ActorRef) = state => {
     println(s"${new java.util.Date} Step is executed with output: $output ($sleep) STATE: $state ${promise.future.isCompleted}")
     Thread.sleep(sleep)
-    promise.success(())
+    markDone()
   }
   def receiveCommand = PartialFunction.empty
   def updateState = PartialFunction.empty

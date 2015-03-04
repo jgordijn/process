@@ -1,5 +1,7 @@
 package process
 
+import akka.actor.ActorContext
+import akka.actor.ActorContext
 import scala.concurrent.duration._
 
 import akka.actor.{ Actor, ActorRef, ActorSystem, Props }
@@ -15,7 +17,7 @@ object PersistentProcessTest {
   case object Response
   case class Command(i: Int)
   case object Completed extends Process.Event
-  class Step(probe: ActorRef) extends ProcessStep[Int] {
+  class Step(probe: ActorRef)(implicit val context: ActorContext) extends ProcessStep[Int] {
     def execute()(implicit process: akka.actor.ActorRef): Int => Unit = { state =>
       probe ! Command(state)
     }
@@ -31,7 +33,7 @@ object PersistentProcessTest {
     }
   }
 
-  class InitStep extends ProcessStep[Int] {
+  class InitStep()(implicit val context: ActorContext) extends ProcessStep[Int] {
     def execute()(implicit process: akka.actor.ActorRef): Int => Unit = { state =>
     }
     def receiveCommand: PartialFunction[Any,Process.Event] = {
@@ -47,6 +49,14 @@ object PersistentProcessTest {
     }
   }
 
+
+  class PersistentProcess1(probe1: TestProbe, probe2: TestProbe, probe3: TestProbe) extends PersistentProcess[Int] {
+    import context.dispatcher
+    val persistenceId = "PersistentProcess1"
+
+    var state = 0
+    val process = new InitStep() ~> new Step(probe1.ref) ~> new Step(probe2.ref) ~> new Step(probe3.ref)
+  }
 }
 class PersistentProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
     with ImplicitSender
@@ -65,13 +75,6 @@ class PersistentProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
   val probe2 = TestProbe()
   val probe3 = TestProbe()
 
-  class PersistentProcess1 extends PersistentProcess[Int] {
-    import context.dispatcher
-    val persistenceId = "PersistentProcess1"
-
-    var state = 0
-    val process = new InitStep ~> new Step(probe1.ref) ~> new Step(probe2.ref) ~> new Step(probe3.ref)
-  }
   def assertStateIs[State](process: ActorRef, state: State) = {
     process ! Process.GetState
     expectMsg(state)
@@ -84,7 +87,7 @@ class PersistentProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
 
   "PersistentProcess" should {
     "persist state" in {
-      val process = system.actorOf(Props(new PersistentProcess1), "persisted-process-test1")
+      val process = system.actorOf(Props(new PersistentProcess1(probe1, probe2, probe3)), "persisted-process-test1")
       assertStateIs(process, 0)
       process ! Start
       probe1.expectMsg(Command(0))
@@ -94,7 +97,7 @@ class PersistentProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
       }
       probe2.expectMsg(Command(1))
       stop(process)
-      val newProcess = system.actorOf(Props(new PersistentProcess1), "persisted-process-test1")
+      val newProcess = system.actorOf(Props(new PersistentProcess1(probe1, probe2, probe3)), "persisted-process-test1")
       assertStateIs(newProcess, 1)
       probe2.expectMsg(Command(1))
       probe2.reply(Response)
