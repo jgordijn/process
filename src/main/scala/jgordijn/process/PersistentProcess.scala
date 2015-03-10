@@ -1,4 +1,4 @@
-package process
+package jgordijn.process
 
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.reflect._

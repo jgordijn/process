@@ -1,4 +1,4 @@
-package process
+package jgordijn.process
 
 import akka.actor.Actor
 import akka.actor.ActorContext

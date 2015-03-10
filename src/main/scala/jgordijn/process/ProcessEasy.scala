@@ -1,4 +1,4 @@
-package process
+package jgordijn.process
 
 import akka.actor._
 import akka.pattern.pipe
