@@ -1,8 +1,37 @@
 lazy val root = (project in file(".")).
   settings(
+    organization := "com.github.jgordijn",
     name := "process",
     version := "0.1.0",
-    scalaVersion := "2.11.5"
+    scalaVersion := "2.11.5",
+    publishMavenStyle := true,
+    publishTo := {
+      val nexus = "https://oss.sonatype.org/"
+      if (isSnapshot.value)
+        Some("snapshots" at nexus + "content/repositories/snapshots")
+      else
+        Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+    }
+      , pomIncludeRepository := { _ => false }
+      , pomExtra := (
+      <url>https://github.com/jgordijn/process</url>
+            <licenses>
+          <license>
+          <name>Apache 2.0</name>
+          <url>http://opensource.org/licenses/Apache-2.0</url>
+            <distribution>repo</distribution>
+          </license>
+          </licenses>
+          <scm>
+        <url>git@github.com:jgordijn/process.git</url>
+        <connection>scm:git:git@github.com:jgordijn/process.git</connection>
+          </scm>
+          <developers>
+          <developer>
+          <id>jgordijn</id>
+          <name>Jeroen Gordijn</name>
+            </developer>
+          </developers>)
   )
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
