@@ -1,6 +1,16 @@
 # Process
 A small framework to define long running (persistent)processes within Akka.
 
+## Getting process
+If you're using SBT, add the following lines to your build file:
+
+```
+libraryDependencies += "com.github.jgordijn" %% "process" % "0.1.0"
+```
+
+For Maven and other build tools, you can visit search.maven.org
+
+## Intro
 If you tried to write a long running (persistent) process in Akka, you
 will find out that this will result in a lot of messages handling in a
 single actor. It is not trivial to see what the process flow is and if
