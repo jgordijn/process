@@ -2,7 +2,7 @@ lazy val root = (project in file(".")).
   settings(
     organization := "com.github.jgordijn",
     name := "process",
-    version := "0.1.0",
+    version := "0.2.0-SNAPSHOT",
     scalaVersion := "2.11.5",
     publishMavenStyle := true,
     publishTo := {
@@ -40,7 +40,7 @@ resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/release
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.9",
   "com.typesafe.akka" %% "akka-persistence-experimental" % "2.3.9",
-  "com.typesafe.akka" %% "akka-testkit" % "2.3.9",
+  "com.typesafe.akka" %% "akka-testkit" % "2.3.9" % "test",
   "com.typesafe.akka" %% "akka-contrib" % "2.3.9",
   "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
 )
