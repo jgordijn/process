@@ -23,18 +23,3 @@ trait Process[State] extends Actor {
       sender() ! state
   }
 }
-
-private class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*)(implicit val context: ActorContext) extends ProcessStep[S] {
-  override def run()(implicit self: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
-    a.run() flatMap { _ =>
-      Future.sequence(b.map(_.run())).flatMap { _ =>
-        promise.trySuccess(())
-        promise.future
-      }
-    }
-  }
-  def execute()(implicit process: ActorRef) = throw new UnsupportedOperationException("This is a chain. It does not execute by itself. Please invoke run.")
-
-  def receiveCommand: PartialFunction[Any, Process.Event] = a.handleReceiveCommand orElse b.foldRight(PartialFunction.empty[Any, Process.Event]) { case (x, y) => x.handleReceiveCommand orElse y }
-  def updateState: PartialFunction[Process.Event, S => S] = a.handleUpdateState orElse b.foldRight(PartialFunction.empty[Process.Event, S => S]) { case (x, y) => x.handleUpdateState orElse y }
-}
