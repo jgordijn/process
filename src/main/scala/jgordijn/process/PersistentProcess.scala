@@ -10,7 +10,7 @@ abstract class PersistentProcess[State : ClassTag] extends PersistentActor {
   def process: ProcessStep[State]
   var state: State
 
-  final def receiveRecover = {
+  final def receiveRecover: Receive = {
     case event: Process.Event =>
       state = process.handleUpdateState(event)(state)
     case RecoveryCompleted =>
@@ -18,7 +18,7 @@ abstract class PersistentProcess[State : ClassTag] extends PersistentActor {
       process.run()
   }
 
-  def receiveCommand = Actor.emptyBehavior
+  def receiveCommand: Receive = Actor.emptyBehavior
 
   override def unhandled(msg: Any): Unit = msg match {
     case x if process.handleReceiveCommand.isDefinedAt(x) =>
