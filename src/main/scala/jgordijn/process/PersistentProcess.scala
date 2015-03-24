@@ -9,12 +9,11 @@ import akka.persistence.{ PersistentActor, RecoveryCompleted }
 abstract class PersistentProcess[State : ClassTag] extends PersistentActor {
   def process: ProcessStep[State]
   var state: State
-  def autostart = true
 
   final def receiveRecover: Receive = {
     case event: Process.Event =>
       state = process.handleUpdateState(event)(state)
-    case RecoveryCompleted if autostart =>
+    case RecoveryCompleted =>
       import context.dispatcher
       process.run()
   }

@@ -16,12 +16,12 @@ trait ProcessStep[S] {
   def updateState: PartialFunction[Process.Event, S => S]
 
   final def isCompleted = promise.isCompleted
-  final def run()(implicit process: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = runImpl
   final def markDone(): Unit = promise.trySuccess(())
   final def onComplete(completeFn: => Unit)(implicit executionContext: ExecutionContext): Unit = promise.future.foreach{ _ => completeFn }
 
   final def ~>(next: ProcessStep[S]*)(implicit context: ActorContext): ProcessStep[S] = new Chain(this, next: _*)
 
+  private[process] def run()(implicit process: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = runImpl
   private val innerActor = context.actorOf(Props(new Actor {
     def receive = {
       case msg if receiveCommand.isDefinedAt(msg) =>
