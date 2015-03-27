@@ -1,10 +1,10 @@
 package jgordijn.process
 
+import scala.concurrent.duration.Duration
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.reflect.ClassTag
 
 import akka.actor.{ Actor, ActorContext, ActorRef, Props }
-import akka.pattern.ask
 import akka.util.Timeout
 
 trait ProcessStep[S] {
@@ -14,6 +14,8 @@ trait ProcessStep[S] {
   def execute()(implicit process: ActorRef): S => Unit
   def receiveCommand: PartialFunction[Any, Process.Event]
   def updateState: PartialFunction[Process.Event, S => S]
+
+  def retryInterval: Duration = Duration.Inf
 
   final def isCompleted = promise.isCompleted
   final def markDone(): Unit = promise.trySuccess(())
@@ -31,12 +33,18 @@ trait ProcessStep[S] {
   }))
   private[process] def handleUpdateState: PartialFunction[Process.Event, S => S] = if(isCompleted) PartialFunction.empty[Process.Event, S => S] else updateState
   private[process] def handleReceiveCommand: PartialFunction[Any, Process.Event] = if(isCompleted) PartialFunction.empty[Any, Process.Event] else receiveCommand
+  private[process] def executeWithPossibleRetry()(implicit process: ActorRef): S => Unit = { state =>
+    implicit val _ = context.dispatcher
+    if(retryInterval.isFinite())
+      context.system.scheduler.scheduleOnce(Duration.fromNanos(retryInterval.toNanos)) { if (!isCompleted) executeWithPossibleRetry()(process)(state) }
+    execute()(process)(state)
+  }
   private[process] def runImpl()(implicit process: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
     import akka.pattern.ask
     import scala.concurrent.duration._
     implicit val timeout: Timeout = 5 seconds
 
-    if (!isCompleted) (process ? Process.GetState).mapTo[S].foreach(execute()(innerActor))
+    if (!isCompleted) (process ? Process.GetState).mapTo[S].foreach(executeWithPossibleRetry()(innerActor))
     promise.future
   }
 }
