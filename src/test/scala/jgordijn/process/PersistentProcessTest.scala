@@ -50,14 +50,20 @@ object PersistentProcessTest {
   }
 
 
-  class PersistentProcess1(probe1: TestProbe, probe2: TestProbe, probe3: TestProbe) extends PersistentProcess[Int] {
+  class PersistentProcess1(probe1: TestProbe, probe2: TestProbe, probe3: TestProbe, probe4: TestProbe, endProbe: TestProbe, completeHook: TestProbe) extends PersistentProcess[Int] {
     import context.dispatcher
     val persistenceId = "PersistentProcess1"
 
     var state = 0
-    val process = new InitStep() ~> new Step(probe1.ref) ~> new Step(probe2.ref) ~> new Step(probe3.ref)
+    val process = new InitStep() ~> new Step(probe1.ref) ~> new Choice(state => state == 1, new Step(probe2.ref) ~> new Step(probe3.ref) , new Step(probe4.ref)) ~> new Step(endProbe.ref)
+
+    process.onComplete {
+      completeHook.ref ! "DONE"
+    }
   }
 }
+
+
 class PersistentProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
     with ImplicitSender
     with WordSpecLike
@@ -70,10 +76,12 @@ class PersistentProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
     TestKit.shutdownActorSystem(system)
   }
 
-
   val probe1 = TestProbe()
   val probe2 = TestProbe()
   val probe3 = TestProbe()
+  val probe4 = TestProbe()
+  val endProbe = TestProbe()
+  val completeHookProbe = TestProbe()
 
   def assertStateIs[State](process: ActorRef, state: State) = {
     process ! Process.GetState
@@ -87,7 +95,7 @@ class PersistentProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
 
   "PersistentProcess" should {
     "persist state" in {
-      val process = system.actorOf(Props(new PersistentProcess1(probe1, probe2, probe3)), "persisted-process-test1")
+      val process = system.actorOf(Props(new PersistentProcess1(probe1, probe2, probe3, probe4, endProbe, completeHookProbe)), "persisted-process-test1")
       assertStateIs(process, 0)
       process ! Start
       probe1.expectMsg(Command(0))
@@ -97,23 +105,22 @@ class PersistentProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
       }
       probe2.expectMsg(Command(1))
       stop(process)
-      val newProcess = system.actorOf(Props(new PersistentProcess1(probe1, probe2, probe3)), "persisted-process-test1")
+      val newProcess = system.actorOf(Props(new PersistentProcess1(probe1, probe2, probe3, probe4, endProbe, completeHookProbe)), "persisted-process-test1")
       assertStateIs(newProcess, 1)
       probe2.expectMsg(Command(1))
       probe2.reply(Response)
       eventually {
         assertStateIs(newProcess, 2)
       }
-
-
-
-
-
-
-
-
-
-
+      probe3.expectMsg(Command(2))
+      probe3.reply(Response)
+      eventually {
+        assertStateIs(newProcess, 3)
+      }
+      endProbe.expectMsg(Command(3))
+      probe3.reply(Response)
+      probe4.expectNoMsg(250 millis)
+      completeHookProbe.expectMsg("DONE")
     }
   }
 
