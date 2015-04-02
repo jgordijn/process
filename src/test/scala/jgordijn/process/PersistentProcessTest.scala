@@ -57,8 +57,8 @@ object PersistentProcessTest {
     var state = 0
     val process = new InitStep() ~> new Step(probe1.ref) ~> new Choice(state => state == 1, new Step(probe2.ref) ~> new Step(probe3.ref) , new Step(probe4.ref)) ~> new Step(endProbe.ref)
 
-    process.onComplete {
-      completeHook.ref ! "DONE"
+    process.onCompleteWithState { state =>
+      completeHook.ref ! s"DONE-$state"
     }
   }
 }
@@ -120,7 +120,7 @@ class PersistentProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
       endProbe.expectMsg(Command(3))
       probe3.reply(Response)
       probe4.expectNoMsg(250 millis)
-      completeHookProbe.expectMsg("DONE")
+      completeHookProbe.expectMsg("DONE-4")
     }
   }
 
