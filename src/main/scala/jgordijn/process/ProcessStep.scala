@@ -23,14 +23,8 @@ trait ProcessStep[S] {
 
   final def isCompleted = promise.isCompleted
   final def markDone(): Unit = promise.trySuccess(())
-  final def onComplete(completeFn: => Unit)(implicit executionContext: ExecutionContext): Unit = promise.future.foreach{ _ => completeFn }
-  final def onCompleteWithState(completeFn: S => Unit)(implicit executionContext: ExecutionContext, process: ActorRef, classtag: ClassTag[S]): Unit = promise.future.foreach{ _ =>
-    import akka.pattern.ask
-    import scala.concurrent.duration._
-    implicit val timeout: Timeout = 5 seconds
-
-    (process ? Process.GetState).mapTo[S].foreach(completeFn)
-  }
+  final def onComplete(completeFn: ((ActorContext, S)) => Unit)(implicit executionContext: ExecutionContext, process: ActorRef): Unit =
+    promise.future.foreach{ _ => process ! PersistentProcess.Perform(completeFn) }
 
   final def ~>(next: ProcessStep[S]*)(implicit context: ActorContext): ProcessStep[S] = new Chain(this, next: _*)
 

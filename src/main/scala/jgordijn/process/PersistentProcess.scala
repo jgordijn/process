@@ -3,8 +3,12 @@ package jgordijn.process
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.reflect._
 
-import akka.actor.{ Actor, ActorRef }
+import akka.actor.{ Actor, ActorContext, ActorRef }
 import akka.persistence.{ PersistentActor, RecoveryCompleted }
+
+object PersistentProcess {
+  case class Perform[State](action: ((ActorContext, State)) => Unit)
+}
 
 abstract class PersistentProcess[State : ClassTag] extends PersistentActor {
   def process: ProcessStep[State]
@@ -30,6 +34,8 @@ abstract class PersistentProcess[State : ClassTag] extends PersistentActor {
       }
     case Process.GetState =>
       sender() ! state
+    case perform: PersistentProcess.Perform[State] =>
+      perform.action(context, state)
     case m =>
       super.unhandled(m)
   }

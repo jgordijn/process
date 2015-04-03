@@ -57,7 +57,7 @@ object PersistentProcessTest {
     var state = 0
     val process = new InitStep() ~> new Step(probe1.ref) ~> new Choice(state => state == 1, new Step(probe2.ref) ~> new Step(probe3.ref) , new Step(probe4.ref)) ~> new Step(endProbe.ref)
 
-    process.onCompleteWithState { state =>
+    process.onComplete { case (context, state) =>
       completeHook.ref ! s"DONE-$state"
     }
   }
