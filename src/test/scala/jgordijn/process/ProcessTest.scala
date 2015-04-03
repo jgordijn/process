@@ -15,14 +15,14 @@ object ProcessTest {
   case object Completed extends Process.Event
   class MockStep(service: ActorRef, retryInt: Duration)(implicit val context: ActorContext) extends ProcessStep[Int] {
     override val retryInterval = retryInt
-    def execute()(implicit process: akka.actor.ActorRef): Int => Unit = { state =>
+    def execute()(implicit process: akka.actor.ActorRef) = { state =>
       service ! Command(state)
     }
-    def receiveCommand: PartialFunction[Any,Process.Event] = {
+    def receiveCommand = {
       case Response =>
         Completed
     }
-    def updateState: PartialFunction[Process.Event,Int => Int] = {
+    def updateState = {
       case Completed => state =>
         markDone()
         state + 1

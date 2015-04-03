@@ -34,13 +34,13 @@ class DemoStep(demoService: ActorRef)(implicit val context: ActorContext)
     extends ProcessStep[DemoState] {
 
   // Code to execute when the step should perform it's task
-  def execute()(implicit process: ActorRef) = state => {
+  def execute()(implicit process: ActorRef): Execution = state => {
     demoService ! Command(state.demoed)
   }
 
   // This catches the responses from the async execute action.
   // It emits Process.Event to the process.
-  def receiveCommand: PartialFunction[Any, Event] = {
+  def receiveCommand: CommandToEvent = {
     case ReplyFromDemoService =>
       Demoed
   }
@@ -48,7 +48,7 @@ class DemoStep(demoService: ActorRef)(implicit val context: ActorContext)
   // The updateState function handles events and changes the state. It
   // should mark the step as done when the event is the last event for
   // this step.
-  def updateState: PartialFunction[Process.Event, Boolean => Boolean] => = {
+  def updateState: UpdateFunction = {
     case Demoed => { state =>
       markDone()
       state.copy(demoed = true)

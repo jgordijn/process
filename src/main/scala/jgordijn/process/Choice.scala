@@ -16,13 +16,13 @@ class Choice[S](condition: S => Boolean, processIfTrue: ProcessStep[S], processI
   private[process] val truePromise: Promise[Unit] = Promise[Unit]()
   private[process] val falsePromise: Promise[Unit] = Promise[Unit]()
 
-  def receiveCommand: PartialFunction[Any, Process.Event] = {
+  def receiveCommand: CommandToEvent = {
     if(truePromise.isCompleted) processIfTrue.receiveCommand
     else if(falsePromise.isCompleted) processIfFalse.receiveCommand
     else receiveCommandChoice
   }
 
-  def updateState: PartialFunction[Process.Event, S => S] = {
+  def updateState: UpdateFunction = {
     if(truePromise.isCompleted) processIfTrue.updateState
     else if(falsePromise.isCompleted) processIfFalse.updateState
     else updateStateChoice
@@ -39,14 +39,14 @@ class Choice[S](condition: S => Boolean, processIfTrue: ProcessStep[S], processI
     Future.firstCompletedOf(List(trueFlow, falseFlow))
   }
 
-  def execute()(implicit process: ActorRef): S => Unit = { state =>
+  def execute()(implicit process: ActorRef): Execution = { state =>
     process ! Choice.MakeChoice(condition(state))
   }
-  def receiveCommandChoice: PartialFunction[Any, Process.Event] = {
+  def receiveCommandChoice: CommandToEvent = {
     case Choice.MakeChoice(value) =>
       Choice.ChoiceResult(value)
   }
-  def updateStateChoice: PartialFunction[Process.Event, S => S] = {
+  def updateStateChoice: UpdateFunction = {
     case Choice.ChoiceResult(true) => state => {
       truePromise.trySuccess(())
       state

@@ -17,10 +17,10 @@ object ProcessStepTest {
   case class Command(state: Int)
   def testStep(executeProbe: ActorRef)(implicit _actorContext: ActorContext) = new ProcessStep[Int] {
     implicit def context = _actorContext
-    def execute()(implicit process: ActorRef): Int => Unit = { state =>
+    def execute()(implicit process: ActorRef) = { state =>
       executeProbe ! Command(state)
     }
-    def receiveCommand: PartialFunction[Any, Process.Event] = {
+    def receiveCommand = {
       case Response =>
         Completed
     }

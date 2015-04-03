@@ -11,9 +11,13 @@ trait ProcessStep[S] {
   implicit def context: ActorContext
   private[process] val promise: Promise[Unit] = Promise[Unit]()
 
-  def execute()(implicit process: ActorRef): S => Unit
-  def receiveCommand: PartialFunction[Any, Process.Event]
-  def updateState: PartialFunction[Process.Event, S => S]
+  type Execution = S => Unit
+  type UpdateFunction = PartialFunction[Process.Event, S => S]
+  type CommandToEvent = PartialFunction[Any, Process.Event]
+
+  def execute()(implicit process: ActorRef): Execution
+  def receiveCommand: CommandToEvent
+  def updateState: UpdateFunction
 
   def retryInterval: Duration = Duration.Inf
 
@@ -38,9 +42,9 @@ trait ProcessStep[S] {
         context.parent ! event
     }
   }))
-  private[process] def handleUpdateState: PartialFunction[Process.Event, S => S] = if(isCompleted) PartialFunction.empty[Process.Event, S => S] else updateState
-  private[process] def handleReceiveCommand: PartialFunction[Any, Process.Event] = if(isCompleted) PartialFunction.empty[Any, Process.Event] else receiveCommand
-  private[process] def executeWithPossibleRetry()(implicit process: ActorRef): S => Unit = { state =>
+  private[process] def handleUpdateState: UpdateFunction = if(isCompleted) PartialFunction.empty[Process.Event, S => S] else updateState
+  private[process] def handleReceiveCommand: CommandToEvent = if(isCompleted) PartialFunction.empty[Any, Process.Event] else receiveCommand
+  private[process] def executeWithPossibleRetry()(implicit process: ActorRef): Execution = { state =>
     implicit val _ = context.dispatcher
     if(retryInterval.isFinite())
       context.system.scheduler.scheduleOnce(Duration.fromNanos(retryInterval.toNanos)) { if (!isCompleted) executeWithPossibleRetry()(process)(state) }

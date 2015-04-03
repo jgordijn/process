@@ -18,14 +18,14 @@ object PersistentProcessTest {
   case class Command(i: Int)
   case object Completed extends Process.Event
   class Step(probe: ActorRef)(implicit val context: ActorContext) extends ProcessStep[Int] {
-    def execute()(implicit process: akka.actor.ActorRef): Int => Unit = { state =>
+    def execute()(implicit process: akka.actor.ActorRef): Execution = { state =>
       probe ! Command(state)
     }
-    def receiveCommand: PartialFunction[Any,Process.Event] = {
+    def receiveCommand: CommandToEvent = {
       case Response =>
         Completed
     }
-    def updateState: PartialFunction[Process.Event,Int => Int] = {
+    def updateState: UpdateFunction = {
       case Completed => { state =>
         markDone()
         state + 1
@@ -34,14 +34,14 @@ object PersistentProcessTest {
   }
 
   class InitStep()(implicit val context: ActorContext) extends ProcessStep[Int] {
-    def execute()(implicit process: akka.actor.ActorRef): Int => Unit = { state =>
+    def execute()(implicit process: akka.actor.ActorRef): Execution = { state =>
     }
     def receiveCommand: PartialFunction[Any,Process.Event] = {
       case Start =>
         Completed
     }
 
-    def updateState: PartialFunction[Process.Event,Int => Int] = {
+    def updateState: UpdateFunction = {
       case Completed => { state =>
         markDone()
         state
