@@ -7,7 +7,7 @@ import scala.concurrent.ExecutionContext
 import akka.actor.{ActorContext, ActorRef}
 
 
-private class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*)(implicit val context: ActorContext) extends ProcessStep[S] {
+private[process] class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*)(implicit val context: ActorContext) extends ProcessStep[S] {
   override private[process] def runImpl()(implicit self: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
     a.run() flatMap { _ =>
       Future.sequence(b.map(_.run())).flatMap { _ =>
