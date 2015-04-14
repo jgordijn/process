@@ -17,15 +17,20 @@ class Choice[S](condition: S ⇒ Boolean, processIfTrue: ProcessStep[S], process
     else PartialFunction.empty
   }
 
-  def updateState: UpdateFunction = result match {
-    case Some(true) ⇒
-      truePromise.trySuccess(())
-      processIfTrue.updateState
-    case Some(false) ⇒
-      falsePromise.trySuccess(())
-      processIfFalse.updateState
-    case None ⇒
-      PartialFunction.empty
+  def updateState: UpdateFunction = {
+    case event ⇒
+      result match {
+        case Some(true) ⇒
+          truePromise.trySuccess(())
+          processIfTrue.updateState.apply(event)
+        case Some(false) ⇒
+          falsePromise.trySuccess(())
+          processIfFalse.updateState.apply(event)
+        case None ⇒ { state ⇒
+          result = Some(condition(state))
+          updateState.apply(event)(state)
+        }
+      }
   }
 
   override private[process] def runImpl()(implicit self: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
@@ -40,6 +45,11 @@ class Choice[S](condition: S ⇒ Boolean, processIfTrue: ProcessStep[S], process
   }
 
   def execute()(implicit process: ActorRef): Execution = { state ⇒
-    result = Some(condition(state))
+    val choiceResult = condition(state)
+    result = Some(choiceResult)
+    if (choiceResult)
+      truePromise.trySuccess(())
+    else
+      falsePromise.trySuccess(())
   }
 }

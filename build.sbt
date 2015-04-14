@@ -2,7 +2,7 @@ lazy val root = (project in file(".")).
   settings(
     organization := "com.github.jgordijn",
     name := "process",
-    version := "0.1.6",
+    version := "0.1.7",
     scalaVersion := "2.11.6",
     publishMavenStyle := true,
     publishTo := {
