@@ -10,16 +10,16 @@ object PersistentProcess {
   case class Perform[State](action: ((ActorContext, State)) => Unit)
 }
 
-abstract class PersistentProcess[State : ClassTag] extends PersistentActor {
-  def process: ProcessStep[State]
+abstract class PersistentProcess[State : ClassTag, ToState : ClassTag] extends PersistentActor {
+  def process: ProcessStep[State, ToState]
   var state: State
 
   final def receiveRecover: Receive = {
     case event: Process.Event =>
-      state = process.handleUpdateState(event)(state)
+      process.handleUpdateState(event)(state)
     case RecoveryCompleted =>
       import context.dispatcher
-      process.run()
+      process.run(state)
   }
 
   def receiveCommand: Receive = Actor.emptyBehavior
@@ -30,7 +30,7 @@ abstract class PersistentProcess[State : ClassTag] extends PersistentActor {
       self ! event
     case event: Process.Event =>
       persist(event) { event =>
-        state = process.handleUpdateState(event)(state)
+        process.handleUpdateState(event)(state)
       }
     case Process.GetState =>
       sender() ! state

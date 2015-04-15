@@ -39,7 +39,7 @@ class EchoActor extends Actor with ActorLogging {
 
 //case class Completed(message: String)
 case object Echoed extends Process.Event
-case class EchoStep(echoer: ActorRef)(implicit val context: ActorContext) extends ProcessStep[Int] {
+case class EchoStep(echoer: ActorRef)(implicit val context: ActorContext) extends ProcessStep[Int, Int] {
   def execute()(implicit process: ActorRef) = state => {
     println(s"Execute echostep: $state")
     echoer ! s"This is my message: $state"
@@ -52,11 +52,9 @@ case class EchoStep(echoer: ActorRef)(implicit val context: ActorContext) extend
   }
 
   def updateState = {
-    case Echoed =>
+    case Echoed => x =>
       println("Complete echo")
-      promise.success(())
-
-      { x => x + 1}
+      markDone(x + 1)
   }
 }
 

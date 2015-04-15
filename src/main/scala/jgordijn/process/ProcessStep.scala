@@ -7,12 +7,12 @@ import scala.reflect.ClassTag
 import akka.actor.{ Actor, ActorContext, ActorRef, Props }
 import akka.util.Timeout
 
-trait ProcessStep[S] {
+trait ProcessStep[State, NewState] {
   implicit def context: ActorContext
-  private[process] val promise: Promise[Unit] = Promise[Unit]()
+  private[process] val promise: Promise[NewState] = Promise()
 
-  type Execution = S => Unit
-  type UpdateFunction = PartialFunction[Process.Event, S => S]
+  type Execution = State => Unit
+  type UpdateFunction = PartialFunction[Process.Event, Any => Unit]
   type CommandToEvent = PartialFunction[Any, Process.Event]
 
   def execute()(implicit process: ActorRef): Execution
@@ -22,13 +22,14 @@ trait ProcessStep[S] {
   def retryInterval: Duration = Duration.Inf
 
   final def isCompleted = promise.isCompleted
-  final def markDone(): Unit = promise.trySuccess(())
-  final def onComplete(completeFn: ((ActorContext, S)) => Unit)(implicit executionContext: ExecutionContext, process: ActorRef): Unit =
+  final def markDone(newState: NewState): Unit = promise.trySuccess(newState)
+  final def onComplete(completeFn: ((ActorContext, State)) => Unit)(implicit executionContext: ExecutionContext, process: ActorRef): Unit =
     promise.future.foreach{ _ => process ! PersistentProcess.Perform(completeFn) }
 
-  final def ~>(next: ProcessStep[S]*)(implicit context: ActorContext): ProcessStep[S] = new Chain(this, next: _*)
+  final def ~>[OtherNewState](next: ProcessStep[NewState, OtherNewState])(implicit context: ActorContext): ProcessStep[State, OtherNewState] = new Chain(this, next: _*)
 
-  private[process] def run()(implicit process: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = runImpl
+  private[process] def run(state: State)(implicit process: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[State]): Future[NewState
+] = runImpl(state)
   private val innerActor = context.actorOf(Props(new Actor {
     def receive = {
       case msg if receiveCommand.isDefinedAt(msg) =>
@@ -36,7 +37,7 @@ trait ProcessStep[S] {
         context.parent ! event
     }
   }))
-  private[process] def handleUpdateState: UpdateFunction = if(isCompleted) PartialFunction.empty[Process.Event, S => S] else updateState
+  private[process] def handleUpdateState: UpdateFunction = if(isCompleted) PartialFunction.empty[Process.Event, Any => Unit] else updateState
   private[process] def handleReceiveCommand: CommandToEvent = if(isCompleted) PartialFunction.empty[Any, Process.Event] else receiveCommand
   private[process] def executeWithPossibleRetry()(implicit process: ActorRef): Execution = { state =>
     implicit val _ = context.dispatcher
@@ -44,12 +45,12 @@ trait ProcessStep[S] {
       context.system.scheduler.scheduleOnce(Duration.fromNanos(retryInterval.toNanos)) { if (!isCompleted) executeWithPossibleRetry()(process)(state) }
     execute()(process)(state)
   }
-  private[process] def runImpl()(implicit process: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
+  private[process] def runImpl(state: State)(implicit process: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[State]): Future[NewState] = {
     import akka.pattern.ask
     import scala.concurrent.duration._
     implicit val timeout: Timeout = 5 seconds
 
-    if (!isCompleted) (process ? Process.GetState).mapTo[S].foreach(executeWithPossibleRetry()(innerActor))
+    if (!isCompleted) executeWithPossibleRetry()(innerActor)(state)
     promise.future
   }
 }

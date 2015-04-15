@@ -5,7 +5,7 @@ import scala.reflect.ClassTag
 
 import akka.actor.{ ActorContext, ActorRef }
 
-class Choice[S](condition: S ⇒ Boolean, processIfTrue: ProcessStep[S], processIfFalse: ProcessStep[S])(implicit val context: ActorContext, classTag: ClassTag[S]) extends ProcessStep[S] {
+class Choice[S, NewState](condition: S ⇒ Boolean, processIfTrue: ProcessStep[S, NewState], processIfFalse: ProcessStep[S, NewState])(implicit val context: ActorContext, classTag: ClassTag[S]) extends ProcessStep[S, NewState] {
 
   private[process] val truePromise: Promise[Unit] = Promise[Unit]()
   private[process] val falsePromise: Promise[Unit] = Promise[Unit]()
@@ -26,21 +26,21 @@ class Choice[S](condition: S ⇒ Boolean, processIfTrue: ProcessStep[S], process
         case Some(false) ⇒
           falsePromise.trySuccess(())
           processIfFalse.updateState.apply(event)
-        case None ⇒ { state ⇒
+        case None ⇒ { case state: S ⇒
           result = Some(condition(state))
-          updateState.apply(event)(state)
+          updateState
         }
       }
   }
 
-  override private[process] def runImpl()(implicit self: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
+  override private[process] def runImpl(state: S)(implicit self: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
     val trueFlow = truePromise.future flatMap { _ ⇒
-      processIfTrue.run()
+      processIfTrue.run(state)
     }
     val falseFlow = falsePromise.future flatMap { _ ⇒
-      processIfFalse.run()
+      processIfFalse.run(state)
     }
-    super.runImpl()
+    super.runImpl(state)
     Future.firstCompletedOf(List(trueFlow, falseFlow))
   }
 
