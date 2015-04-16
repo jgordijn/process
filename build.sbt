@@ -1,8 +1,8 @@
 import sbtrelease.ReleasePlugin
 
-//val standardSettings: Seq[Setting[_]] = releaseSettings
+val standardSettings: Seq[Setting[_]] = releaseSettings
 
-releaseSettings
+
 
 lazy val root = (project in file(".")).
   settings(
@@ -36,10 +36,9 @@ lazy val root = (project in file(".")).
           <id>jgordijn</id>
           <name>Jeroen Gordijn</name>
             </developer>
-          </developers>),
-    ReleasePlugin.ReleaseKeys.publishArtifactsAction := PgpKeys.publishSigned.value
-  )
-  //.settings(standardSettings: _*)
+          </developers>)
+  ).settings(standardSettings: _*)
+  .settings(ReleasePlugin.ReleaseKeys.publishArtifactsAction := PgpKeys.publishSigned.value)
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
