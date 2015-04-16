@@ -11,8 +11,8 @@ trait ProcessStep[S] {
   implicit def context: ActorContext
   private[process] val promise: Promise[Unit] = Promise[Unit]()
 
-  type Execution = S => Unit
-  type UpdateFunction = PartialFunction[Process.Event, S => S]
+  type Execution = S ⇒ Unit
+  type UpdateFunction = PartialFunction[Process.Event, S ⇒ S]
   type CommandToEvent = PartialFunction[Any, Process.Event]
 
   def execute()(implicit process: ActorRef): Execution
@@ -23,8 +23,10 @@ trait ProcessStep[S] {
 
   final def isCompleted = promise.isCompleted
   final def markDone(): Unit = promise.trySuccess(())
-  final def onComplete(completeFn: ((ActorContext, S)) => Unit)(implicit executionContext: ExecutionContext, process: ActorRef): Unit =
-    promise.future.foreach{ _ => process ! PersistentProcess.Perform(completeFn) }
+  final def onComplete(completeFn: ((ActorContext, S)) ⇒ Unit)(implicit executionContext: ExecutionContext, process: ActorRef): Unit =
+    promise.future.foreach { _ ⇒ process ! PersistentProcess.Perform(completeFn) }
+
+  final def onCompleteAsync(completeFn: ⇒ Unit)(implicit executionContext: ExecutionContext): Unit = promise.future.foreach(_ ⇒ completeFn)
 
   final def ~>(next: ProcessStep[S]*)(implicit context: ActorContext): ProcessStep[S] = new Chain(this, next: _*)
 
@@ -36,11 +38,11 @@ trait ProcessStep[S] {
         context.parent ! event
     }
   }))
-  private[process] def handleUpdateState: UpdateFunction = if(isCompleted) PartialFunction.empty[Process.Event, S => S] else updateState
-  private[process] def handleReceiveCommand: CommandToEvent = if(isCompleted) PartialFunction.empty[Any, Process.Event] else receiveCommand
-  private[process] def executeWithPossibleRetry()(implicit process: ActorRef): Execution = { state =>
+  private[process] def handleUpdateState: UpdateFunction = if (isCompleted) PartialFunction.empty[Process.Event, S ⇒ S] else updateState
+  private[process] def handleReceiveCommand: CommandToEvent = if (isCompleted) PartialFunction.empty[Any, Process.Event] else receiveCommand
+  private[process] def executeWithPossibleRetry()(implicit process: ActorRef): Execution = { state ⇒
     implicit val _ = context.dispatcher
-    if(retryInterval.isFinite())
+    if (retryInterval.isFinite())
       context.system.scheduler.scheduleOnce(Duration.fromNanos(retryInterval.toNanos)) { if (!isCompleted) executeWithPossibleRetry()(process)(state) }
     execute()(process)(state)
   }
