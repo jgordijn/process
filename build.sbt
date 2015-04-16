@@ -1,8 +1,13 @@
+import sbtrelease.ReleasePlugin
+
+//val standardSettings: Seq[Setting[_]] = releaseSettings
+
+releaseSettings
+
 lazy val root = (project in file(".")).
   settings(
     organization := "com.github.jgordijn",
     name := "process",
-    version := "0.1.8",
     scalaVersion := "2.11.6",
     publishMavenStyle := true,
     publishTo := {
@@ -31,8 +36,10 @@ lazy val root = (project in file(".")).
           <id>jgordijn</id>
           <name>Jeroen Gordijn</name>
             </developer>
-          </developers>)
+          </developers>),
+    ReleasePlugin.ReleaseKeys.publishArtifactsAction := PgpKeys.publishSigned.value
   )
+  //.settings(standardSettings: _*)
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
