@@ -1,8 +1,9 @@
 import sbtrelease.ReleasePlugin
+import SonatypeKeys._
 
 val standardSettings: Seq[Setting[_]] = releaseSettings
 
-
+sonatypeSettings
 
 lazy val root = (project in file(".")).
   settings(
