@@ -11,6 +11,12 @@ class Choice[S](condition: S ⇒ Boolean, processIfTrue: ProcessStep[S], process
   private[process] val falsePromise: Promise[Unit] = Promise[Unit]()
   var result = Option.empty[Boolean]
 
+  override private[process] def abort(): Unit = {
+    processIfTrue.abort()
+    processIfFalse.abort()
+    super.abort()
+  }
+
   def receiveCommand: CommandToEvent = {
     if (truePromise.isCompleted) processIfTrue.receiveCommand
     else if (falsePromise.isCompleted) processIfFalse.receiveCommand

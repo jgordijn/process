@@ -1,16 +1,16 @@
 package jgordijn.process
 
 import akka.actor.ActorContext
-import akka.actor.ActorContext
+import jgordijn.process.Process.AbortEvent
 import scala.concurrent.duration._
 
-import akka.actor.{ Actor, ActorRef, ActorSystem, Props }
-import akka.persistence.RecoveryCompleted
+import akka.actor.{ ActorRef, ActorSystem, Props }
 import akka.testkit.{ ImplicitSender, TestActor, TestKit, TestProbe }
 
 import org.scalatest._
-import org.scalatest.matchers.ShouldMatchers._
 import org.scalatest.concurrent.Eventually
+
+import scala.reflect._
 
 object PersistentProcessTest {
   case object Start
@@ -62,7 +62,8 @@ object PersistentProcessTest {
   object PersistentProcess1 {
     case class State(probeCalled: List[ActorRef] = Nil)
   }
-  class PersistentProcess1(probe1: TestProbe, probe2: TestProbe, probe3: TestProbe, probe4: TestProbe, probe5: TestProbe, endProbe: TestProbe, completeHook: TestProbe) extends PersistentProcess[PersistentProcess1.State] {
+ case object Aborted extends AbortEvent
+  class PersistentProcess1(probe1: TestProbe, probe2: TestProbe, probe3: TestProbe, probe4: TestProbe, probe5: TestProbe, endProbe: TestProbe, completeHook: TestProbe)(implicit val commandClassTag: ClassTag[Int], implicit val eventClassTag: ClassTag[Boolean]) extends AbortablePersistentProcess[PersistentProcess1.State] {
     import context.dispatcher
     val persistenceId = "PersistentProcess1"
 
@@ -78,6 +79,8 @@ object PersistentProcessTest {
       case (context, state) ⇒
         completeHook.ref ! s"DONE-${state.probeCalled.size}"
     }
+
+    override def createAbortEvent(): AbortEvent = Aborted
   }
 }
 

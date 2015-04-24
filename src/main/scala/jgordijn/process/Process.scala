@@ -8,6 +8,8 @@ import akka.actor.{ Actor, ActorContext, ActorRef }
 object Process {
   case object GetState
   trait Event
+  trait AbortCommand
+  trait AbortEvent
 }
 
 trait Process[State] extends Actor {
