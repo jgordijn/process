@@ -18,7 +18,7 @@ class Choice[S](condition: S ⇒ Boolean, processIfTrue: ProcessStep[S], process
   }
 
   def updateState: UpdateFunction = {
-    case event ⇒
+    case event if processIfFalse.handleUpdateState.isDefinedAt(event) || processIfTrue.handleUpdateState.isDefinedAt(event) ⇒
       result match {
         case Some(true) ⇒
           truePromise.trySuccess(())
