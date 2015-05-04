@@ -5,7 +5,7 @@ A small framework to define long running (persistent)processes within Akka.
 If you're using SBT, add the following lines to your build file:
 
 ```
-libraryDependencies += "com.github.jgordijn" %% "process" % "0.1.0"
+libraryDependencies += "processframework" %% "process" % "0.1.11"
 ```
 
 For Maven and other build tools, you can visit search.maven.org

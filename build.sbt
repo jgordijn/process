@@ -7,7 +7,7 @@ sonatypeSettings
 
 lazy val root = (project in file(".")).
   settings(
-    organization := "com.github.jgordijn",
+    organization := "processframework",
     name := "process",
     scalaVersion := "2.11.6",
     publishMavenStyle := true,

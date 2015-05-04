@@ -1,4 +1,4 @@
-package jgordijn.process
+package processframework
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -7,15 +7,15 @@ import scala.concurrent.ExecutionContext
 import akka.actor.{ActorContext, ActorRef}
 
 
-private[process] class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*)(implicit val context: ActorContext) extends ProcessStep[S] {
+private[processframework] class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*)(implicit val context: ActorContext) extends ProcessStep[S] {
 
-  override private[process] def abort(): Unit = {
+  override private[processframework] def abort(): Unit = {
     a.abort()
     b.foreach(_.abort())
     super.abort()
   }
 
-  override private[process] def runImpl()(implicit self: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
+  override private[processframework] def runImpl()(implicit self: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
     a.run() flatMap { _ =>
       Future.sequence(b.map(_.run())).flatMap { _ =>
         markDone()

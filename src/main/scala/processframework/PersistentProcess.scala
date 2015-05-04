@@ -1,12 +1,11 @@
-package jgordijn.process
+package processframework
 
 import akka.actor.Actor._
-import jgordijn.process.Process.{AbortCommand, AbortEvent}
+import akka.actor.{Actor, ActorContext}
+import akka.persistence.{PersistentActor, RecoveryCompleted}
+import processframework.Process.{AbortCommand, AbortEvent}
 
 import scala.reflect._
-
-import akka.actor.{ Actor, ActorContext }
-import akka.persistence.{ PersistentActor, RecoveryCompleted }
 
 object PersistentProcess {
   case class Perform[State](action: ((ActorContext, State)) => Unit)
@@ -64,7 +63,7 @@ abstract class PersistentProcess[State : ClassTag] extends PersistentActor {
       persist(event) { event =>
         state = process.handleUpdateState(event)(state)
       }
-    case Process.GetState =>
+    case processframework.Process.GetState =>
       sender() ! state
     case perform: PersistentProcess.Perform[State] =>
       perform.action(context, state)

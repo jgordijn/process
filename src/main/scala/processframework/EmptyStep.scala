@@ -1,11 +1,6 @@
-package jgordijn.process
+package processframework
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{ ExecutionContext, Future, Promise }
-import scala.reflect.ClassTag
-
-import akka.actor.{ Actor, ActorContext, ActorRef, Props }
-import akka.util.Timeout
+import akka.actor.{ ActorContext, ActorRef }
 
 object EmptyStep {
   def apply[S]()(implicit context: ActorContext): ProcessStep[S] = new EmptyStep()

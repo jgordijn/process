@@ -1,4 +1,4 @@
-package jgordijn.process
+package processframework
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.reflect.ClassTag
@@ -7,11 +7,11 @@ import akka.actor.{ ActorContext, ActorRef }
 
 class Choice[S](condition: S ⇒ Boolean, processIfTrue: ProcessStep[S], processIfFalse: ProcessStep[S])(implicit val context: ActorContext, classTag: ClassTag[S]) extends ProcessStep[S] {
 
-  private[process] val truePromise: Promise[Unit] = Promise[Unit]()
-  private[process] val falsePromise: Promise[Unit] = Promise[Unit]()
+  private[processframework] val truePromise: Promise[Unit] = Promise[Unit]()
+  private[processframework] val falsePromise: Promise[Unit] = Promise[Unit]()
   var result = Option.empty[Boolean]
 
-  override private[process] def abort(): Unit = {
+  override private[processframework] def abort(): Unit = {
     processIfTrue.abort()
     processIfFalse.abort()
     super.abort()
@@ -39,7 +39,7 @@ class Choice[S](condition: S ⇒ Boolean, processIfTrue: ProcessStep[S], process
       }
   }
 
-  override private[process] def runImpl()(implicit self: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
+  override private[processframework] def runImpl()(implicit self: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
     val trueFlow = truePromise.future flatMap { _ ⇒
       processIfTrue.run()
     }

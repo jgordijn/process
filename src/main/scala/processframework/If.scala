@@ -1,4 +1,4 @@
-package jgordijn.process
+package processframework
 
 import scala.reflect.ClassTag
 

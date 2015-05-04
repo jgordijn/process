@@ -1,7 +1,9 @@
-package jgordijn.process
+package processframework
+
+import java.lang
 
 import akka.actor.ActorContext
-import jgordijn.process.Process.AbortEvent
+import Process.AbortEvent
 import scala.concurrent.duration._
 
 import akka.actor.{ ActorRef, ActorSystem, Props }
@@ -117,7 +119,7 @@ class PersistentProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
   println(probes)
 
   def assertStateContains[State](process: ActorRef, probe: ActorRef) = {
-    process ! Process.GetState
+    process ! processframework.Process.GetState
     val msg = expectMsgType[PersistentProcess1.State]
     msg.probeCalled should contain(probe)
   }

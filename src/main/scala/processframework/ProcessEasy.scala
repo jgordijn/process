@@ -1,15 +1,8 @@
-package jgordijn.process
+package processframework
 
 import akka.actor._
-import akka.pattern.pipe
-import akka.util.Timeout
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+
 import scala.concurrent._
-import scala.concurrent.Promise
-import scala.reflect.ClassTag
-import scala.util.Failure
-import scala.util.Success
 
 object Main extends App {
   val system = ActorSystem("ProcessEasy")
@@ -17,7 +10,6 @@ object Main extends App {
   println("Started")
   Thread.sleep(500)
   process ! "Start"
-  import system.dispatcher
   import scala.concurrent.duration._
   try { system.awaitTermination(10 seconds) }
   catch {
@@ -27,8 +19,9 @@ object Main extends App {
 }
 
 class EchoActor extends Actor with ActorLogging {
-  import scala.concurrent.duration._
   import context.dispatcher
+
+  import scala.concurrent.duration._
   def receive = {
     case x =>
       log.debug(s"Received: $x")

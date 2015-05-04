@@ -1,4 +1,6 @@
-package jgordijn.process
+package processframework
+
+import java.lang
 
 import akka.actor.{ActorContext, ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -55,7 +57,7 @@ class ProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
     "have a happy flow" in {
       val service = TestProbe()
       val process = system.actorOf(Props(new Process1(service.ref, Duration.Inf)), "Process1")
-      process ! Process.GetState
+      process ! processframework.Process.GetState
       expectMsg(0)
       process ! Start
 
@@ -63,19 +65,19 @@ class ProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
       service.reply(Response)
 
       eventually {
-        process ! Process.GetState
+        process ! processframework.Process.GetState
         expectMsg(1)
       }
       process ! Start
       expectNoMsg(250 millis)
-      process ! Process.GetState
+      process ! processframework.Process.GetState
       expectMsg(1)
     }
 
     "does not retry by default"  in {
       val service = TestProbe()
       val process = system.actorOf(Props(new Process1(service.ref, Duration.Inf)), "Process2")
-      process ! Process.GetState
+      process ! processframework.Process.GetState
       expectMsg(0)
       process ! Start
 
@@ -86,7 +88,7 @@ class ProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
     "retries execution until succeeded" in {
       val service = TestProbe()
       val process = system.actorOf(Props(new Process1(service.ref, 150 millis)), "Process3")
-      process ! Process.GetState
+      process ! processframework.Process.GetState
       expectMsg(0)
       process ! Start
 

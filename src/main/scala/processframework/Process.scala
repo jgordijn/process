@@ -1,9 +1,6 @@
-package jgordijn.process
+package processframework
 
-import scala.concurrent.{ ExecutionContext, Future }
-import scala.reflect.ClassTag
-
-import akka.actor.{ Actor, ActorContext, ActorRef }
+import akka.actor.Actor
 
 object Process {
   case object GetState
