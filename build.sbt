@@ -32,6 +32,8 @@ resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/release
 
 resolvers += Resolver.jcenterRepo
 
+releaseSettings
+
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.9",
   "com.typesafe.akka" %% "akka-persistence-experimental" % "2.3.9",
