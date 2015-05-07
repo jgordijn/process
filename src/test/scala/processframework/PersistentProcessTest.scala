@@ -2,17 +2,17 @@ package processframework
 
 import java.lang
 
-import akka.actor.ActorContext
+import akka.actor._
 import Process.AbortEvent
+import akka.persistence.PersistentActor
 import scala.concurrent.duration._
-
-import akka.actor.{ ActorRef, ActorSystem, Props }
-import akka.testkit.{ ImplicitSender, TestActor, TestKit, TestProbe }
+import akka.testkit.{ ImplicitSender, TestKit, TestProbe }
 
 import org.scalatest._
 import org.scalatest.concurrent.Eventually
 
 import scala.reflect._
+import scala.util.Success
 
 object PersistentProcessTest {
   case object Start
@@ -51,7 +51,7 @@ object PersistentProcessTest {
     }
 
     def updateState: UpdateFunction = {
-      case Completed("init") ⇒ { state ⇒
+      case Completed(_) ⇒ { state ⇒
         markDone()
         println("init completed")
         state
@@ -162,6 +162,58 @@ class PersistentProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
       probe5.expectNoMsg(250 millis)
       completeHookProbe.expectMsg("DONE-5")
     }
+    "handle unhandled recoveryEvents" in {
+      class PersistentProcess1(probe1: TestProbe, dropHook: TestProbe, completeHook: TestProbe)(implicit val commandClassTag: ClassTag[Int], implicit val eventClassTag: ClassTag[Boolean]) extends AbortablePersistentProcess[PersistentProcess1.State] {
+        import context.dispatcher
+        val persistenceId = "PersistentProcess3"
+
+        var state = PersistentProcess1.State()
+        val process = new InitStep() ~> new Step(probe1.ref)
+
+        process.onComplete {
+          case (context, state) ⇒
+            completeHook.ref ! s"DONE-${state.probeCalled.size}"
+        }
+        override def createAbortEvent(): AbortEvent = Aborted
+
+        override def unhandledRecoveryEvent: PartialFunction[Process.Event, Unit] = {
+          case Completed(x) =>
+            dropHook.ref ! s"Dropped: $x"
+        }
+      }
+      case object Written
+      class JustWrite extends PersistentActor {
+        override def persistenceId: String = "PersistentProcess3"
+        override def receiveRecover: Receive = Actor.emptyBehavior
+
+        override def receiveCommand: Receive = {
+          case txt: String =>
+            persist(Completed(txt)) {evt => sender() ! Success(())}
+        }
+      }
+
+      val writeData = system.actorOf(Props(new JustWrite))
+      writeData ! "One"
+      expectMsg(Success())
+      writeData ! "Two"
+      expectMsg(Success())
+      watch(writeData)
+      writeData ! PoisonPill
+      expectTerminated(writeData)
+
+      val probe1 = TestProbe()
+      val dropHook = TestProbe()
+      val completeHookProbe = TestProbe()
+
+      val process = system.actorOf(Props(new PersistentProcess1(probe1, dropHook, completeHookProbe)))
+      dropHook.expectMsg("Dropped: Two")
+      probe1.expect(process)
+
+
+    }
   }
+
+
+
 
 }

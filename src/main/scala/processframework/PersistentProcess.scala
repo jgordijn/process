@@ -40,11 +40,14 @@ abstract class PersistentProcess[State : ClassTag] extends PersistentActor {
 
   def eventHandling: Receive = Actor.emptyBehavior
   def commandHandling: Receive = Actor.emptyBehavior
+  def unhandledRecoveryEvent: PartialFunction[Process.Event, Unit] = PartialFunction.empty
 
   var aborted = false
   final def receiveRecover: Receive = eventHandling orElse {
-    case event: Process.Event =>
+    case event: Process.Event if process.handleUpdateState.isDefinedAt(event) =>
       state = process.handleUpdateState(event)(state)
+    case event: Process.Event =>
+      unhandledRecoveryEvent(event)
     case RecoveryCompleted =>
       import context.dispatcher
       if(!aborted)
