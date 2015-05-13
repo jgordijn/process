@@ -26,7 +26,6 @@ trait ProcessStepTestSupport[S, PS <: ProcessStep[S]] { this: TestKit with Befor
   override protected def beforeEach(): Unit = {
     testProbe = createTestProbe()
     processActor = createProcessActor()
-    println(s"created $processActor")
   }
 
   def createTestProbe(): TestProbe
