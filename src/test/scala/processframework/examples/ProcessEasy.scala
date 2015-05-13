@@ -1,8 +1,10 @@
-package processframework
+package processframework.examples
 
 import akka.actor._
 
 import scala.concurrent._
+
+import processframework._
 
 object Main extends App {
   val system = ActorSystem("ProcessEasy")
@@ -70,6 +72,7 @@ object WalkInThePark {
 
 class WalkInThePark extends Process[Int] {
   import context.dispatcher
+
   var state = 0
   val step1 = PrintStep("Stap 1", 500)
   val step2 = PrintStep("FOOOOO", 300)
