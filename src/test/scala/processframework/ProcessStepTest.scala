@@ -32,11 +32,8 @@ object ProcessStepTest {
     }
   }
 }
-class ProcessStepTest extends TestKit(ActorSystem("ProcessStepTest"))
-  with ImplicitSender
-  with WordSpecLike
-  with Matchers
-  with BeforeAndAfterAll {
+
+class ProcessStepTest extends BaseSpec {
   import ProcessStepTest._
 
   override def afterAll {
