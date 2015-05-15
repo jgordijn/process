@@ -42,7 +42,7 @@ class ProcessStepTest extends BaseSpec with ProcessStepTestSupport[Int, ProcessS
     processProbe
   }
 
-  def createTestProbe: TestProbe = {
+  def createTestProbe(): TestProbe = {
     val serviceMockProbe = TestProbe()
     serviceMockProbe.setAutoPilot(new TestActor.AutoPilot {
       def run(sender: ActorRef, msg: Any): TestActor.AutoPilot = {

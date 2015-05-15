@@ -9,7 +9,7 @@ case class NoState()
 
 class EmptyStepSpec extends BaseSpec with ProcessStepTestSupport[NoState, EmptyStep[NoState]] {
 
-  def createTestProbe: TestProbe = TestProbe()
+  def createTestProbe(): TestProbe = TestProbe()
 
   def createProcessStep(executeProbe: TestProbe)(implicit context: ActorContext): EmptyStep[NoState] = EmptyStep[NoState]()
 

@@ -17,7 +17,7 @@ abstract class BaseSpec extends TestKit(ActorSystem(getClass.getSimpleName.strip
     with ImplicitSender
     with Eventually {
 
-  override def afterAll {
+  override def afterAll() {
     TestKit.shutdownActorSystem(system)
   }
 }
