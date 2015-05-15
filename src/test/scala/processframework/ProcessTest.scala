@@ -9,12 +9,12 @@ import org.scalatest.concurrent.Eventually
 
 import scala.concurrent.duration._
 
-
 object ProcessTest {
   case object Start
   case object Response
   case class Command(i: Int)
   case object Completed extends Process.Event
+
   class MockStep(service: ActorRef, retryInt: Duration)(implicit val context: ActorContext) extends ProcessStep[Int] {
     override val retryInterval = retryInt
     def execute()(implicit process: akka.actor.ActorRef) = { state =>
@@ -42,16 +42,9 @@ object ProcessTest {
     }
   }
 }
-class ProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
-    with ImplicitSender
-    with WordSpecLike
-    with Matchers
-    with BeforeAndAfterAll
-    with Eventually {
+
+class ProcessTest extends BaseSpec {
   import ProcessTest._
-  override def afterAll() = {
-    TestKit.shutdownActorSystem(system)
-  }
 
   "Process" should {
     "have a happy flow" in {
@@ -98,6 +91,5 @@ class ProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
       service.reply(Response)
       expectNoMsg()
     }
-
   }
 }
