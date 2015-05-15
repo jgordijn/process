@@ -1,6 +1,6 @@
 package processframework
 
-import akka.actor.{ActorLogging, ActorRef, Props, ActorContext}
+import akka.actor.{ ActorLogging, ActorRef, Props, ActorContext }
 
 class CounterPersistentProcessSpec extends BaseSpec {
   import CounterPersistentProcess._
@@ -78,7 +78,7 @@ class IncrementProcessStep()(implicit val context: ActorContext) extends Process
   def execute()(implicit process: akka.actor.ActorRef): Execution = { _ ⇒ }
 
   def receiveCommand: PartialFunction[Any, Process.Event] = {
-    case CounterPersistentProcess.Increment  ⇒
+    case CounterPersistentProcess.Increment ⇒
       CounterPersistentProcess.CountIncremented
   }
 
@@ -94,7 +94,7 @@ class DecrementProcessStep()(implicit val context: ActorContext) extends Process
   def execute()(implicit process: akka.actor.ActorRef): Execution = { _ ⇒ }
 
   def receiveCommand: PartialFunction[Any, Process.Event] = {
-    case CounterPersistentProcess.Decrement  ⇒   CounterPersistentProcess.CountDecremented
+    case CounterPersistentProcess.Decrement ⇒ CounterPersistentProcess.CountDecremented
   }
 
   def updateState: UpdateFunction = {

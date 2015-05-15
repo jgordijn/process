@@ -15,7 +15,7 @@ object Main extends App {
   import scala.concurrent.duration._
   try { system.awaitTermination(10 seconds) }
   catch {
-    case _: TimeoutException =>
+    case _: TimeoutException ⇒
       system.shutdown()
   }
 }
@@ -25,38 +25,37 @@ class EchoActor extends Actor with ActorLogging {
 
   import scala.concurrent.duration._
   def receive = {
-    case x =>
+    case x ⇒
       log.debug(s"Received: $x")
       context.system.scheduler.scheduleOnce(2 seconds, sender(), x)
   }
 }
 
-
 //case class Completed(message: String)
 case object Echoed extends Process.Event
 case class EchoStep(echoer: ActorRef)(implicit val context: ActorContext) extends ProcessStep[Int] {
-  def execute()(implicit process: ActorRef) = state => {
+  def execute()(implicit process: ActorRef) = state ⇒ {
     println(s"Execute echostep: $state")
     echoer ! s"This is my message: $state"
   }
 
   def receiveCommand = {
-    case retVal: String if retVal.contains("This is my message") =>
+    case retVal: String if retVal.contains("This is my message") ⇒
       println(s"${new java.util.Date} Completing this $this")
       Echoed
   }
 
   def updateState = {
-    case Echoed =>
+    case Echoed ⇒
       println("Complete echo")
       promise.success(())
 
-      { x => x + 1}
+      { x ⇒ x + 1 }
   }
 }
 
 case class PrintStep(output: String, sleep: Long)(implicit val context: ActorContext) extends ProcessStep[Int] {
-  def execute()(implicit process: ActorRef) = state => {
+  def execute()(implicit process: ActorRef) = state ⇒ {
     println(s"${new java.util.Date} Step is executed with output: $output ($sleep) STATE: $state ${promise.future.isCompleted}")
     Thread.sleep(sleep)
     markDone()
@@ -69,7 +68,6 @@ object WalkInThePark {
   def props = Props(new WalkInThePark)
 }
 
-
 class WalkInThePark extends Process[Int] {
   import context.dispatcher
 
@@ -81,14 +79,14 @@ class WalkInThePark extends Process[Int] {
   val echo2 = EchoStep(echoer)
 
   val process: ProcessStep[Int] =
-    step1 ~> step2 ~> echo ~> echo2  ~> (PrintStep("Stap 2", 2500), PrintStep("Stap 3", 100)) ~> PrintStep("Done", 50)
+    step1 ~> step2 ~> echo ~> echo2 ~> (PrintStep("Stap 2", 2500), PrintStep("Stap 3", 100)) ~> PrintStep("Done", 50)
 
-  process.promise.future.foreach { _ =>
+  process.promise.future.foreach { _ ⇒
     context.system.shutdown()
- }
+  }
 
   def receive = {
-    case "Start" =>
+    case "Start" ⇒
       println("START")
       process.run()
   }

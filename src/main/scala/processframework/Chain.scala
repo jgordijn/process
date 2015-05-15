@@ -4,8 +4,7 @@ import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.concurrent.ExecutionContext
 
-import akka.actor.{ActorContext, ActorRef}
-
+import akka.actor.{ ActorContext, ActorRef }
 
 private[processframework] class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*)(implicit val context: ActorContext) extends ProcessStep[S] {
 
@@ -16,8 +15,8 @@ private[processframework] class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*)(
   }
 
   override private[processframework] def runImpl()(implicit self: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = {
-    a.run() flatMap { _ =>
-      Future.sequence(b.map(_.run())).flatMap { _ =>
+    a.run() flatMap { _ ⇒
+      Future.sequence(b.map(_.run())).flatMap { _ ⇒
         markDone()
         promise.future
       }
@@ -25,6 +24,6 @@ private[processframework] class Chain[S](a: ProcessStep[S], b: ProcessStep[S]*)(
   }
   def execute()(implicit process: ActorRef) = throw new UnsupportedOperationException("This is a chain. It does not execute by itself. Please invoke run.")
 
-  def receiveCommand: CommandToEvent = a.handleReceiveCommand orElse b.foldRight(PartialFunction.empty[Any, Process.Event]) { case (x, y) => x.handleReceiveCommand orElse y }
-  def updateState: UpdateFunction = a.handleUpdateState orElse b.foldRight(PartialFunction.empty[Process.Event, S => S]) { case (x, y) => x.handleUpdateState orElse y }
+  def receiveCommand: CommandToEvent = a.handleReceiveCommand orElse b.foldRight(PartialFunction.empty[Any, Process.Event]) { case (x, y) ⇒ x.handleReceiveCommand orElse y }
+  def updateState: UpdateFunction = a.handleUpdateState orElse b.foldRight(PartialFunction.empty[Process.Event, S ⇒ S]) { case (x, y) ⇒ x.handleUpdateState orElse y }
 }
