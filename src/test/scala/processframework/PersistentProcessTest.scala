@@ -78,8 +78,8 @@ object PersistentProcessTest {
       new Step(endProbe.ref)
 
     process.onComplete {
-      case (context, state) ⇒
-        completeHook.ref ! s"DONE-${state.probeCalled.size}"
+      case (c, s) ⇒
+        completeHook.ref ! s"DONE-${s.probeCalled.size}"
     }
 
     override def createAbortEvent(): AbortEvent = Aborted
@@ -89,7 +89,7 @@ object PersistentProcessTest {
 class PersistentProcessTest extends BaseSpec {
   import PersistentProcessTest._
 
-  override def afterAll {
+  override def afterAll() {
     TestKit.shutdownActorSystem(system)
   }
 
@@ -166,8 +166,8 @@ class PersistentProcessTest extends BaseSpec {
         val process = new InitStep() ~> new Step(probe1.ref)
 
         process.onComplete {
-          case (context, state) ⇒
-            completeHook.ref ! s"DONE-${state.probeCalled.size}"
+          case (c, s) ⇒
+            completeHook.ref ! s"DONE-${s.probeCalled.size}"
         }
         override def createAbortEvent(): AbortEvent = Aborted
 
