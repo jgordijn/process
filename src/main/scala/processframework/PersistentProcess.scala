@@ -64,7 +64,7 @@ abstract class PersistentProcess[State: ClassTag] extends PersistentActor with A
       val event = process.handleReceiveCommand(x)
       log.debug(s"Persistent process (${this.getClass.getSimpleName}): handled command '$x', resulted in event '$event'")
       self ! event
-    case event: Process.Event if (process.handleUpdateState.isDefinedAt(event)) ⇒
+    case event: Process.Event if process.handleUpdateState.isDefinedAt(event) ⇒
       persist(event) { event ⇒
         log.debug(s"Persistent process (${this.getClass.getSimpleName}): persisted event '$event'")
         state = process.handleUpdateState(event)(state)

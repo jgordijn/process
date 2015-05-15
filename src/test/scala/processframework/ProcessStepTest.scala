@@ -69,11 +69,11 @@ class ProcessStepTest extends BaseSpec with ProcessStepTestSupport[Int, ProcessS
 
       // When response is received by process, it will send this to the steps, so they can handle it
       val event = expectMsg(Completed)
-      step.isCompleted should not be (true)
+      step.isCompleted should not be true
 
       // The event can be used to retrieve an updateState function
       val updateStateFunction = step.handleUpdateState(event)
-      step.isCompleted should not be (true)
+      step.isCompleted should not be true
       updateStateFunction(646) should be(647)
       step.isCompleted should be(true)
     }
