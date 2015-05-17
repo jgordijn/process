@@ -86,12 +86,7 @@ object PersistentProcessTest {
   }
 }
 
-class PersistentProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
-    with ImplicitSender
-    with WordSpecLike
-    with Matchers
-    with BeforeAndAfterAll
-    with Eventually {
+class PersistentProcessTest extends BaseSpec {
   import PersistentProcessTest._
 
   override def afterAll {
@@ -208,12 +203,6 @@ class PersistentProcessTest extends TestKit(ActorSystem("ProcessStepTest"))
       val process = system.actorOf(Props(new PersistentProcess1(probe1, dropHook, completeHookProbe)))
       dropHook.expectMsg("Dropped: Two")
       probe1.expect(process)
-
-
     }
   }
-
-
-
-
 }
