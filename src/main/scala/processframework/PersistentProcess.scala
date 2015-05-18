@@ -69,6 +69,8 @@ abstract class PersistentProcess[State : ClassTag] extends PersistentActor with 
         log.debug(s"Persistent process (${this.getClass.getSimpleName}): persisted event '$event'")
         state = process.handleUpdateState(event)(state)
       }
+    case event: Process.Event =>
+      log.debug(s"Persistent process (${this.getClass.getSimpleName}): unable to persist event '$event', probably the event was already persisted before or the event is (now) unknown to the process.")
     case processframework.Process.GetState =>
       log.debug(s"Persistent process (${this.getClass.getSimpleName}): get state '$state'")
       sender() ! state
