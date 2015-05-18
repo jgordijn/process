@@ -9,7 +9,7 @@ object ProcessStepTest {
   case class Command(state: Int)
 
   def testStep(executeProbe: ActorRef)(implicit _actorContext: ActorContext) = new ProcessStep[Int] {
-    implicit def context = _actorContext
+    implicit def context: ActorContext = _actorContext
     def execute()(implicit process: ActorRef) = { state ⇒
       executeProbe ! Command(state)
     }
