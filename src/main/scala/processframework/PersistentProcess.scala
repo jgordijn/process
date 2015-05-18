@@ -45,7 +45,7 @@ abstract class PersistentProcess[State: ClassTag] extends PersistentActor with A
   final def receiveRecover: Receive = eventHandling orElse {
     case event: Process.Event if process.handleUpdateState.isDefinedAt(event) ⇒
       state = process.handleUpdateState(event)(state)
-    case event: Process.Event =>
+    case event: Process.Event ⇒
       log.warning(s"Persistent process ({}): unhandled event during recovery, event='{}'", getClass.getSimpleName, event)
       unhandledRecoveryEvent(event)
     case RecoveryCompleted ⇒
@@ -57,27 +57,27 @@ abstract class PersistentProcess[State: ClassTag] extends PersistentActor with A
   def receiveCommand: Receive = Actor.emptyBehavior
 
   override def unhandled(msg: Any): Unit = msg match {
-    case x if commandHandling.isDefinedAt(x) =>
+    case x if commandHandling.isDefinedAt(x) ⇒
       log.debug(s"Persistent process ({}): commandHandling handles command '{}'", getClass.getSimpleName, x)
       commandHandling(x)
     case x if process.handleReceiveCommand.isDefinedAt(x) ⇒
       val event = process.handleReceiveCommand(x)
       log.debug(s"Persistent process ({}): handled command '{}', resulted in event '{}'", getClass.getSimpleName, x, event)
       self ! event
-    case event: Process.Event if (process.handleUpdateState.isDefinedAt(event)) =>
-      persist(event) { event =>
+    case event: Process.Event if (process.handleUpdateState.isDefinedAt(event)) ⇒
+      persist(event) { event ⇒
         log.debug(s"Persistent process ({}): persisted event '{}'", getClass.getSimpleName, event)
         state = process.handleUpdateState(event)(state)
       }
-    case event: Process.Event =>
+    case event: Process.Event ⇒
       log.debug(s"Persistent process ({}): unable to persist event '{}', probably the event was already persisted before or the event is (now) unknown to the process.", getClass.getSimpleName, event)
-    case processframework.Process.GetState =>
+    case processframework.Process.GetState ⇒
       log.debug(s"Persistent process ({}): get state '{}'", getClass.getSimpleName, state)
       sender() ! state
-    case perform: PersistentProcess.Perform[State] =>
+    case perform: PersistentProcess.Perform[State] ⇒
       log.debug(s"Persistent process ({}): performing action, '{}'", getClass.getSimpleName, perform.action)
       perform.action(context, state)
-    case m =>
+    case m ⇒
       log.debug(s"Persistent process ({}): persistent process, unhandled msg: '{}'", getClass.getSimpleName, m)
       super.unhandled(m)
   }
