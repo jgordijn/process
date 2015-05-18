@@ -75,7 +75,7 @@ class ProcessStepTest extends BaseSpec with ProcessStepTestSupport[Int, ProcessS
       val updateStateFunction = step.handleUpdateState(event)
       step.isCompleted should not be true
       updateStateFunction(646) should be(647)
-      step.isCompleted should be(true)
+      step.isCompleted shouldBe true
     }
     "run the step logic (which does not complete the step)" in {
       // GIVEN
