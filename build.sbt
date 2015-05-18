@@ -47,10 +47,13 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(PreserveDanglingCloseParenthesis, true)
     .setPreference(RewriteArrowSymbols, true)
 
+val akkaVersion       = "2.3.11"
+val scalaTestVersion  = "2.2.5"
+
 libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-actor" % "2.3.9",
-  "com.typesafe.akka" %% "akka-persistence-experimental" % "2.3.9",
-  "com.typesafe.akka" %% "akka-testkit" % "2.3.9" % "test",
-  "com.typesafe.akka" %% "akka-contrib" % "2.3.9",
-  "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
+  "com.typesafe.akka"   %%    "akka-actor"                      % akkaVersion,
+  "com.typesafe.akka"   %%    "akka-persistence-experimental"   % akkaVersion,
+  "com.typesafe.akka"   %%    "akka-contrib"                    % akkaVersion,
+  "com.typesafe.akka"   %%    "akka-testkit"                    % akkaVersion         % "test",
+  "org.scalatest"       %     "scalatest_2.11"                  % scalaTestVersion    % "test"
 )
