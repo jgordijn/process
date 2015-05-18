@@ -18,7 +18,7 @@ there are parallel parts. Primary reason is that different steps are
 implemented in a single class. This library tries to make life easier
 by doing 2 things:
 
-1. Create a seperate class for each step in the process flow
+1. Create a separate class for each step in the process flow
 2. Create a process class that describes how the steps are linked
 together
 
