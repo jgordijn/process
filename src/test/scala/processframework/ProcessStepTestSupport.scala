@@ -1,14 +1,14 @@
 package processframework
 
 import akka.pattern.ask
-import akka.actor.{ActorRef, ActorContext, Actor, Props}
+import akka.actor.{ ActorRef, ActorContext, Actor, Props }
 import akka.util.Timeout
 
 import scala.concurrent.duration._
 import scala.concurrent.Await
 import scala.reflect.ClassTag
 
-import akka.testkit.{TestProbe, TestKit}
+import akka.testkit.{ TestProbe, TestKit }
 import org.scalatest.BeforeAndAfterEach
 
 object ProcessStepTestSupport {
@@ -17,7 +17,7 @@ object ProcessStepTestSupport {
   case object AnEvent extends Process.Event
 }
 
-trait ProcessStepTestSupport[S, PS <: ProcessStep[S]] { this: TestKit with BeforeAndAfterEach =>
+trait ProcessStepTestSupport[S, PS <: ProcessStep[S]] { this: TestKit with BeforeAndAfterEach ⇒
   implicit val timeout: Timeout = 1 second
 
   var testProbe: TestProbe = null
@@ -35,9 +35,9 @@ trait ProcessStepTestSupport[S, PS <: ProcessStep[S]] { this: TestKit with Befor
     val step = createProcessStep(testProbe)
 
     def receive = {
-      case msg if sender() == step          =>  testActor forward msg
-      case ProcessStepTestSupport.GetStep   =>  sender() ! step
-      case e: Process.Event                 =>  testActor ! e
+      case msg if sender() == step        ⇒ testActor forward msg
+      case ProcessStepTestSupport.GetStep ⇒ sender() ! step
+      case e: Process.Event               ⇒ testActor ! e
     }
   }))
 

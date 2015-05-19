@@ -1,49 +1,49 @@
 package processframework
 
-import akka.actor.{ActorLogging, ActorRef, Props, ActorContext}
+import akka.actor.{ ActorLogging, ActorRef, Props, ActorContext }
 
 class CounterPersistentProcessSpec extends BaseSpec {
   import CounterPersistentProcess._
 
   var initialCount: Int = 5
-  var counterPersistenProcess: ActorRef = null
+  var counterPersistentProcess: ActorRef = null
 
   override protected def beforeEach(): Unit = {
-    counterPersistenProcess = system.actorOf(Props(new CounterPersistentProcess(initialCount)(testActor)))
+    counterPersistentProcess = system.actorOf(Props(new CounterPersistentProcess(initialCount)(testActor)))
     initialCount += 10
   }
 
   "Counter persistent process" should {
     "increment only once even though multiple commands are fired" in {
-      counterPersistenProcess ! Increment
+      counterPersistentProcess ! Increment
       expectMsg[Int](initialCount + 1)
 
       // superfluous amount of Increment commands
-      counterPersistenProcess ! Increment
-      counterPersistenProcess ! Increment
+      counterPersistentProcess ! Increment
+      counterPersistentProcess ! Increment
 
-      counterPersistenProcess ! Process.GetState
+      counterPersistentProcess ! Process.GetState
       expectMsg[Int](initialCount + 1)
     }
     "increment only once even though multiple events are simulated" in {
-      counterPersistenProcess ! CountIncremented
+      counterPersistentProcess ! CountIncremented
       expectMsg[Int](initialCount + 1)
 
       // superfluous amount of CountIncremented events
-      counterPersistenProcess ! CountIncremented
-      counterPersistenProcess ! CountIncremented
+      counterPersistentProcess ! CountIncremented
+      counterPersistentProcess ! CountIncremented
 
-      counterPersistenProcess ! Process.GetState
+      counterPersistentProcess ! Process.GetState
       expectMsg[Int](initialCount + 1)
     }
     "increment & decrement only once when multiple commands and events are mixed" in {
-      counterPersistenProcess ! Increment
-      counterPersistenProcess ! CountIncremented
+      counterPersistentProcess ! Increment
+      counterPersistentProcess ! CountIncremented
 
-      counterPersistenProcess ! CountDecremented
-      counterPersistenProcess ! Decrement
+      counterPersistentProcess ! CountDecremented
+      counterPersistentProcess ! Decrement
 
-      counterPersistenProcess ! Process.GetState
+      counterPersistentProcess ! Process.GetState
       expectMsg[Int](initialCount)
     }
   }
@@ -78,7 +78,7 @@ class IncrementProcessStep()(implicit val context: ActorContext) extends Process
   def execute()(implicit process: akka.actor.ActorRef): Execution = { _ ⇒ }
 
   def receiveCommand: PartialFunction[Any, Process.Event] = {
-    case CounterPersistentProcess.Increment  ⇒
+    case CounterPersistentProcess.Increment ⇒
       CounterPersistentProcess.CountIncremented
   }
 
@@ -94,7 +94,7 @@ class DecrementProcessStep()(implicit val context: ActorContext) extends Process
   def execute()(implicit process: akka.actor.ActorRef): Execution = { _ ⇒ }
 
   def receiveCommand: PartialFunction[Any, Process.Event] = {
-    case CounterPersistentProcess.Decrement  ⇒   CounterPersistentProcess.CountDecremented
+    case CounterPersistentProcess.Decrement ⇒ CounterPersistentProcess.CountDecremented
   }
 
   def updateState: UpdateFunction = {

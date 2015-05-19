@@ -34,7 +34,7 @@ trait ProcessStep[S] {
   private[processframework] def run()(implicit process: ActorRef, executionContext: ExecutionContext, classTag: ClassTag[S]): Future[Unit] = runImpl
   private val innerActor = context.actorOf(Props(new Actor {
     def receive = {
-      case msg if receiveCommand.isDefinedAt(msg) =>
+      case msg if receiveCommand.isDefinedAt(msg) ⇒
         val event = receiveCommand(msg)
         context.parent ! event
     }

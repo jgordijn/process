@@ -64,22 +64,22 @@ object PersistentProcessTest {
   object PersistentProcess1 {
     case class State(probeCalled: List[ActorRef] = Nil)
   }
- case object Aborted extends AbortEvent
+  case object Aborted extends AbortEvent
   class PersistentProcess1(probe1: TestProbe, probe2: TestProbe, probe3: TestProbe, probe4: TestProbe, probe5: TestProbe, endProbe: TestProbe, completeHook: TestProbe)(implicit val commandClassTag: ClassTag[Int], implicit val eventClassTag: ClassTag[Boolean]) extends AbortablePersistentProcess[PersistentProcess1.State] {
     import context.dispatcher
     val persistenceId = "PersistentProcess1"
 
     var state = PersistentProcess1.State()
     val process = new InitStep() ~>
-      Par(If[PersistentProcess1.State](_ => true) (new Step(probe1.ref)), new Step(probe2.ref)) ~>
+      Par(If[PersistentProcess1.State](_ ⇒ true)(new Step(probe1.ref)), new Step(probe2.ref)) ~>
       new Choice(state ⇒ state.probeCalled.contains(probe1.ref),
         new Step(probe3.ref) ~> new Step(probe4.ref),
         new Step(probe5.ref)) ~>
       new Step(endProbe.ref)
 
     process.onComplete {
-      case (context, state) ⇒
-        completeHook.ref ! s"DONE-${state.probeCalled.size}"
+      case (c, s) ⇒
+        completeHook.ref ! s"DONE-${s.probeCalled.size}"
     }
 
     override def createAbortEvent(): AbortEvent = Aborted
@@ -89,7 +89,7 @@ object PersistentProcessTest {
 class PersistentProcessTest extends BaseSpec {
   import PersistentProcessTest._
 
-  override def afterAll {
+  override def afterAll() {
     TestKit.shutdownActorSystem(system)
   }
 
@@ -166,13 +166,13 @@ class PersistentProcessTest extends BaseSpec {
         val process = new InitStep() ~> new Step(probe1.ref)
 
         process.onComplete {
-          case (context, state) ⇒
-            completeHook.ref ! s"DONE-${state.probeCalled.size}"
+          case (c, s) ⇒
+            completeHook.ref ! s"DONE-${s.probeCalled.size}"
         }
         override def createAbortEvent(): AbortEvent = Aborted
 
         override def unhandledRecoveryEvent: PartialFunction[Process.Event, Unit] = {
-          case Completed(x) =>
+          case Completed(x) ⇒
             dropHook.ref ! s"Dropped: $x"
         }
       }
@@ -182,8 +182,8 @@ class PersistentProcessTest extends BaseSpec {
         override def receiveRecover: Receive = Actor.emptyBehavior
 
         override def receiveCommand: Receive = {
-          case txt: String =>
-            persist(Completed(txt)) {evt => sender() ! Success(())}
+          case txt: String ⇒
+            persist(Completed(txt)) { evt ⇒ sender() ! Success(()) }
         }
       }
 

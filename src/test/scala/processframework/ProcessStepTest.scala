@@ -9,16 +9,16 @@ object ProcessStepTest {
   case class Command(state: Int)
 
   def testStep(executeProbe: ActorRef)(implicit _actorContext: ActorContext) = new ProcessStep[Int] {
-    implicit def context = _actorContext
-    def execute()(implicit process: ActorRef) = { state =>
+    implicit def context: ActorContext = _actorContext
+    def execute()(implicit process: ActorRef) = { state ⇒
       executeProbe ! Command(state)
     }
     def receiveCommand = {
-      case Response =>
+      case Response ⇒
         Completed
     }
     def updateState = {
-      case Completed => { state =>
+      case Completed ⇒ { state ⇒
         markDone()
         state + 1
       }
@@ -34,19 +34,20 @@ class ProcessStepTest extends BaseSpec with ProcessStepTestSupport[Int, ProcessS
     processProbe.setAutoPilot(new TestActor.AutoPilot {
       def run(sender: ActorRef, msg: Any): TestActor.AutoPilot =
         msg match {
-          case Process.GetState ⇒ sender ! state; TestActor.KeepRunning
-          case Completed => testActor ! Completed; TestActor.KeepRunning
+          case Process.GetState ⇒
+            sender ! state; TestActor.KeepRunning
+          case Completed ⇒ testActor ! Completed; TestActor.KeepRunning
         }
     })
     processProbe
   }
 
-  def createTestProbe: TestProbe = {
+  def createTestProbe(): TestProbe = {
     val serviceMockProbe = TestProbe()
     serviceMockProbe.setAutoPilot(new TestActor.AutoPilot {
       def run(sender: ActorRef, msg: Any): TestActor.AutoPilot = {
         msg match {
-          case cmd: Command =>
+          case cmd: Command ⇒
             sender ! Response
             TestActor.NoAutoPilot
         }
@@ -68,13 +69,13 @@ class ProcessStepTest extends BaseSpec with ProcessStepTestSupport[Int, ProcessS
 
       // When response is received by process, it will send this to the steps, so they can handle it
       val event = expectMsg(Completed)
-      step.isCompleted should not be(true)
+      step.isCompleted should not be true
 
       // The event can be used to retrieve an updateState function
       val updateStateFunction = step.handleUpdateState(event)
-      step.isCompleted should not be(true)
-      updateStateFunction(646) should be (647)
-      step.isCompleted should be(true)
+      step.isCompleted should not be true
+      updateStateFunction(646) should be(647)
+      step.isCompleted shouldBe true
     }
     "run the step logic (which does not complete the step)" in {
       // GIVEN

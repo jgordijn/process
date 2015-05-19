@@ -2,8 +2,8 @@ package processframework
 
 import java.lang
 
-import akka.actor.{ActorContext, ActorRef, ActorSystem, Props}
-import akka.testkit.{ImplicitSender, TestKit, TestProbe}
+import akka.actor.{ ActorContext, ActorRef, ActorSystem, Props }
+import akka.testkit.{ ImplicitSender, TestKit, TestProbe }
 import org.scalatest._
 import org.scalatest.concurrent.Eventually
 
@@ -17,15 +17,15 @@ object ProcessTest {
 
   class MockStep(service: ActorRef, retryInt: Duration)(implicit val context: ActorContext) extends ProcessStep[Int] {
     override val retryInterval = retryInt
-    def execute()(implicit process: akka.actor.ActorRef) = { state =>
+    def execute()(implicit process: akka.actor.ActorRef) = { state ⇒
       service ! Command(state)
     }
     def receiveCommand = {
-      case Response =>
+      case Response ⇒
         Completed
     }
     def updateState = {
-      case Completed => state =>
+      case Completed ⇒ state ⇒
         markDone()
         state + 1
     }
@@ -37,7 +37,7 @@ object ProcessTest {
     val process = new MockStep(service, retryInterval)
 
     def receive = {
-      case Start =>
+      case Start ⇒
         process.run()
     }
   }
@@ -67,7 +67,7 @@ class ProcessTest extends BaseSpec {
       expectMsg(1)
     }
 
-    "does not retry by default"  in {
+    "does not retry by default" in {
       val service = TestProbe()
       val process = system.actorOf(Props(new Process1(service.ref, Duration.Inf)), "Process2")
       process ! processframework.Process.GetState
