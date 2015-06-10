@@ -5,7 +5,9 @@ A small framework to define long running (persistent)processes within Akka.
 If you're using SBT, add the following lines to your build file:
 
 ```
-libraryDependencies += "processframework" %% "process" % "0.1.11"
+resolver += "processFramework at bintray" at "https://dl.bintray.com/jgordijn/maven/"
+
+libraryDependencies += "processframework" %% "process" % "0.1.15"
 ```
 
 For Maven and other build tools, you can visit search.maven.org
@@ -34,7 +36,7 @@ class DemoStep(demoService: ActorRef)(implicit val context: ActorContext)
     extends ProcessStep[DemoState] {
 
   // Code to execute when the step should perform it's task
-  def execute()(implicit process: ActorRef): Execution = state => {
+  def execute()(implicit stepActor: ActorRef): Execution = state => {
     demoService ! Command(state.demoed)
   }
 
@@ -74,7 +76,7 @@ class DemoProcess(demoService: ActorRef) extends Process[DemoState] {
   val subflow2 = subStepX ~> subStepY
 
   // process defines the complete process
-  val process = step1 ~> step2 ~> (subflow1, subflow2) ~> step3
+  val process = step1 ~> step2 ~> Par(subflow1, subflow2) ~> step3
 
   def receiveCommand = {
     case CommandToStartProcess =>
@@ -102,7 +104,7 @@ class DemoProcess(demoService: ActorRef) extends PersistentProcess[DemoState] {
   val subflow2 = subStepX ~> subStepY
 
   // process defines the complete process
-  val process = step1 ~> step2 ~> (subflow1, subflow2) ~> step3
+  val process = step1 ~> step2 ~> Par(subflow1, subflow2) ~> step3
 
   def receiveCommand = {
     case CommandToStartProcess =>
