@@ -5,7 +5,7 @@ A small framework to define long running (persistent)processes within Akka.
 If you're using SBT, add the following lines to your build file:
 
 ```
-resolver += "processFramework at bintray" at "https://dl.bintray.com/jgordijn/maven/"
+resolvers += "processFramework at bintray" at "https://dl.bintray.com/jgordijn/maven/"
 
 libraryDependencies += "processframework" %% "process" % "0.1.15"
 ```
