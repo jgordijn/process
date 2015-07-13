@@ -26,6 +26,7 @@ trait AbortablePersistentProcess[S] extends PersistentProcess[S] {
   override def commandHandling: Receive = {
     case abort: AbortCommand ⇒
       persist(createAbortEvent()) { event ⇒
+        postPersist(event)
         process.abort()
         aborted = true
         sender() ! event
@@ -42,6 +43,13 @@ abstract class PersistentProcess[State: ClassTag] extends PersistentActor with A
   def eventHandling: Receive = Actor.emptyBehavior
   def commandHandling: Receive = Actor.emptyBehavior
   def unhandledRecoveryEvent: PartialFunction[Process.Event, Unit] = PartialFunction.empty
+
+  /**
+   * Hook to give the implementer the power to do something after the fact that an event is persisted.
+   *
+   * @param event The event which is persisted in the journal
+   */
+  def postPersist(event: Process.Event): Unit = {}
 
   final def receiveRecover: Receive = eventHandling orElse {
     case event: Process.Event if process.handleUpdateState.isDefinedAt(event) ⇒
@@ -68,6 +76,7 @@ abstract class PersistentProcess[State: ClassTag] extends PersistentActor with A
     case event: Process.Event if process.handleUpdateState.isDefinedAt(event) ⇒
       persist(event) { evt ⇒
         log.debug(s"Persistent process ({}): persisted event '{}'", getClass.getSimpleName, evt)
+        postPersist(evt)
         state = process.handleUpdateState(evt)(state)
       }
     case event: Process.Event ⇒

@@ -6,7 +6,7 @@ object Process {
   case object GetState
   trait Event
   trait AbortCommand
-  trait AbortEvent
+  trait AbortEvent extends Event
 }
 
 trait Process[State] extends Actor {
