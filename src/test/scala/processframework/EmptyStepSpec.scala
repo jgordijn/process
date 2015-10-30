@@ -3,8 +3,6 @@ package processframework
 import akka.actor.ActorContext
 import akka.testkit.TestProbe
 
-import scala.reflect.ClassTag
-
 case class NoState()
 
 class EmptyStepSpec extends BaseSpec with ProcessStepTestSupport[NoState, EmptyStep[NoState]] {
