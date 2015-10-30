@@ -65,6 +65,8 @@ abstract class PersistentProcess[State: ClassTag] extends PersistentActor with A
 
   def receiveCommand: Receive = Actor.emptyBehavior
 
+  val sendToProcess = unhandled _
+
   override def unhandled(msg: Any): Unit = msg match {
     case cmd if commandHandling.isDefinedAt(cmd) ⇒
       log.debug(s"Persistent process ({}): commandHandling handles command '{}'", getClass.getSimpleName, cmd)
