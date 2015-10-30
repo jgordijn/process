@@ -1,11 +1,7 @@
 package processframework
 
-import java.lang
-
-import akka.actor.{ ActorContext, ActorRef, ActorSystem, Props }
-import akka.testkit.{ ImplicitSender, TestKit, TestProbe }
-import org.scalatest._
-import org.scalatest.concurrent.Eventually
+import akka.actor.{ ActorContext, ActorRef, Props }
+import akka.testkit.TestProbe
 
 import scala.concurrent.duration._
 
@@ -26,8 +22,7 @@ object ProcessTest {
     }
     def updateState = {
       case Completed ⇒ state ⇒
-        markDone()
-        state + 1
+        markDone(state + 1)
     }
   }
 

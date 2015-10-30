@@ -1,7 +1,7 @@
 package processframework
 
-import akka.actor.{ Actor, ActorContext, ActorRef, ActorSystem, Props }
-import akka.testkit.{ TestActor, TestKit, TestProbe }
+import akka.actor.{ ActorContext, ActorRef }
+import akka.testkit.{ TestActor, TestProbe }
 
 object ProcessStepTest {
   case object Completed extends Process.Event
@@ -19,8 +19,7 @@ object ProcessStepTest {
     }
     def updateState = {
       case Completed ⇒ { state ⇒
-        markDone()
-        state + 1
+        markDone(state + 1)
       }
     }
   }
