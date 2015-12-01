@@ -11,7 +11,11 @@ If you're using SBT, add the following lines to your build file:
 ```
 resolvers += "processFramework at bintray" at "https://dl.bintray.com/jgordijn/maven/"
 
-libraryDependencies += "processframework" %% "process" % "0.1.15"
+// Latest working with akka 2.3.x
+libraryDependencies += "processframework" %% "process" % "0.1.16"
+
+// akka 2.4.x
+libraryDependencies += "processframework" %% "process" % "0.1.17"
 ```
 
 For Maven and other build tools, you can visit search.maven.org

@@ -6,7 +6,7 @@ lazy val root = (project in file(".")).
   settings(
     organization := "processframework",
     name := "process",
-    scalaVersion := "2.11.6",
+    scalaVersion := "2.11.7",
     publishMavenStyle := true,
     pomExtra := <url>https://github.com/jgordijn/process</url>
       <licenses>
@@ -47,7 +47,7 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(PreserveDanglingCloseParenthesis, true)
     .setPreference(RewriteArrowSymbols, true)
 
-val akkaVersion       = "2.4.0"
+val akkaVersion       = "2.4.1"
 val scalaTestVersion  = "2.2.5"
 
 libraryDependencies ++= Seq(
