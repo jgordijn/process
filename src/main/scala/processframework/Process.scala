@@ -10,7 +10,7 @@ object Process {
 }
 
 trait Process[State] extends Actor {
-  def process: ProcessStep[State]
+  val process: ProcessStep[State]
   var state: State
   override def unhandled(msg: Any): Unit = msg match {
     case x if process.handleReceiveCommand.isDefinedAt(x) ⇒
