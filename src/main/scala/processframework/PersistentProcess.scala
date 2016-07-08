@@ -38,7 +38,7 @@ abstract class PersistentProcess[State: ClassTag] extends PersistentActor with A
   var state: State
   var aborted = false
 
-  def process: ProcessStep[State]
+  val process: ProcessStep[State]
 
   def eventHandling: Receive = Actor.emptyBehavior
   def commandHandling: Receive = Actor.emptyBehavior
