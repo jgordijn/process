@@ -1,22 +1,25 @@
 package processframework
 
 import akka.actor.{ ActorLogging, ActorRef, Props, ActorContext }
+import akka.testkit.TestProbe
 
 class CounterPersistentProcessSpec extends BaseSpec {
   import CounterPersistentProcess._
 
   var initialCount: Int = 5
   var counterPersistentProcess: ActorRef = null
+  var stepCompletionProbe = TestProbe()
 
   override protected def beforeEach(): Unit = {
-    counterPersistentProcess = system.actorOf(Props(new CounterPersistentProcess(initialCount)(testActor)))
-    initialCount += 10
+    stepCompletionProbe = TestProbe()
+    counterPersistentProcess = system.actorOf(Props(new CounterPersistentProcess(initialCount)(stepCompletionProbe.ref)))
+    initialCount = 5
   }
 
   "Counter persistent process" should {
     "increment only once even though multiple commands are fired" in {
       counterPersistentProcess ! Increment
-      expectMsg[Int](initialCount + 1)
+      stepCompletionProbe.expectMsg[Int](initialCount + 1)
 
       // superfluous amount of Increment commands
       counterPersistentProcess ! Increment
@@ -24,10 +27,12 @@ class CounterPersistentProcessSpec extends BaseSpec {
 
       counterPersistentProcess ! Process.GetState
       expectMsg[Int](initialCount + 1)
+      stepCompletionProbe.expectNoMsg()
+      expectNoMsg()
     }
     "increment only once even though multiple events are simulated" in {
       counterPersistentProcess ! CountIncremented
-      expectMsg[Int](initialCount + 1)
+      stepCompletionProbe.expectMsg[Int](initialCount + 1)
 
       // superfluous amount of CountIncremented events
       counterPersistentProcess ! CountIncremented
@@ -35,6 +40,8 @@ class CounterPersistentProcessSpec extends BaseSpec {
 
       counterPersistentProcess ! Process.GetState
       expectMsg[Int](initialCount + 1)
+      stepCompletionProbe.expectNoMsg()
+      expectNoMsg()
     }
     "increment & decrement only once when multiple commands and events are mixed" in {
       counterPersistentProcess ! Increment
