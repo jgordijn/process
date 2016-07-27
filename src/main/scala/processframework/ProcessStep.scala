@@ -23,6 +23,10 @@ trait ProcessStep[S] {
 
   final def isCompleted = promise.isCompleted
   final def markDone(): Unit = promise.trySuccess(())
+  final def markDone(newState: S): S = {
+    markDone()
+    newState
+  }
   private[processframework] def abort(): Unit = promise.tryFailure(new RuntimeException("Process aborted"))
   final def onComplete(completeFn: ((ActorContext, S)) ⇒ Unit)(implicit executionContext: ExecutionContext, process: ActorRef): Unit =
     promise.future.foreach { _ ⇒ process ! PersistentProcess.Perform(completeFn) }

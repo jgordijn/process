@@ -25,9 +25,7 @@ object ProcessTest {
         Completed
     }
     def updateState = {
-      case Completed ⇒ state ⇒
-        markDone()
-        state + 1
+      case Completed ⇒ state ⇒ markDone(state + 1)
     }
   }
 
