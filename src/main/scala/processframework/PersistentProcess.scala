@@ -65,8 +65,6 @@ abstract class PersistentProcess[State: ClassTag] extends PersistentActor with A
 
   def receiveCommand: Receive = Actor.emptyBehavior
 
-  final def sendToProcess(msg: Any): Unit = handleMsgInProcess.applyOrElse(msg, handleUnhandled)
-
   private val handleMsgInProcess: Receive = {
     case cmd if commandHandling.isDefinedAt(cmd) ⇒
       log.debug(s"Persistent process ({}): commandHandling handles command '{}'", getClass.getSimpleName, cmd)
@@ -75,11 +73,6 @@ abstract class PersistentProcess[State: ClassTag] extends PersistentActor with A
       val event = process.handleReceiveCommand(cmd)
       log.debug(s"Persistent process ({}): handled command '{}', resulted in event '{}'", getClass.getSimpleName, cmd, event)
       self ! event
-  }
-
-  private val handleUnhandled: Any ⇒ Unit = { msg ⇒
-    log.debug(s"Persistent process ({}): persistent process, unhandled msg: '{}'", getClass.getSimpleName, msg)
-    super.unhandled(msg)
   }
 
   private val handleState: Receive = {
@@ -102,5 +95,12 @@ abstract class PersistentProcess[State: ClassTag] extends PersistentActor with A
       perform.action(context, state)
   }
 
+  private val handleUnhandled: Any ⇒ Unit = { msg ⇒
+    log.debug(s"Persistent process ({}): persistent process, unhandled msg: '{}'", getClass.getSimpleName, msg)
+    super.unhandled(msg)
+  }
+
   override def unhandled(msg: Any): Unit = (handleMsgInProcess orElse handleState orElse performCallbacks).applyOrElse(msg, handleUnhandled)
+
+  final def sendToProcess(msg: Any): Unit = handleMsgInProcess.applyOrElse(msg, handleUnhandled)
 }
