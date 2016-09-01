@@ -65,7 +65,7 @@ abstract class PersistentProcess[State: ClassTag] extends PersistentActor with A
 
   def receiveCommand: Receive = Actor.emptyBehavior
 
-  override def unhandled(msg: Any): Unit = msg match {
+  private val handleMsgInProcess: Receive = {
     case cmd if commandHandling.isDefinedAt(cmd) ⇒
       log.debug(s"Persistent process ({}): commandHandling handles command '{}'", getClass.getSimpleName, cmd)
       commandHandling(cmd)
@@ -73,6 +73,9 @@ abstract class PersistentProcess[State: ClassTag] extends PersistentActor with A
       val event = process.handleReceiveCommand(cmd)
       log.debug(s"Persistent process ({}): handled command '{}', resulted in event '{}'", getClass.getSimpleName, cmd, event)
       self ! event
+  }
+
+  private val handleState: Receive = {
     case event: Process.Event if process.handleUpdateState.isDefinedAt(event) ⇒
       persist(event) { evt ⇒
         log.debug(s"Persistent process ({}): persisted event '{}'", getClass.getSimpleName, evt)
@@ -84,11 +87,20 @@ abstract class PersistentProcess[State: ClassTag] extends PersistentActor with A
     case Process.GetState ⇒
       log.debug(s"Persistent process ({}): get state '{}'", getClass.getSimpleName, state)
       sender() ! state
+  }
+
+  private val performCallbacks: Receive = {
     case perform: PersistentProcess.Perform[State] ⇒
       log.debug(s"Persistent process ({}): performing action, '{}'", getClass.getSimpleName, perform.action)
       perform.action(context, state)
-    case other ⇒
-      log.debug(s"Persistent process ({}): persistent process, unhandled msg: '{}'", getClass.getSimpleName, other)
-      super.unhandled(other)
   }
+
+  private val handleUnhandled: Any ⇒ Unit = { msg ⇒
+    log.debug(s"Persistent process ({}): persistent process, unhandled msg: '{}'", getClass.getSimpleName, msg)
+    super.unhandled(msg)
+  }
+
+  override def unhandled(msg: Any): Unit = (handleMsgInProcess orElse handleState orElse performCallbacks).applyOrElse(msg, handleUnhandled)
+
+  final def sendToProcess(msg: Any): Unit = handleMsgInProcess.applyOrElse(msg, handleUnhandled)
 }

@@ -90,10 +90,7 @@ class IncrementProcessStep()(implicit val context: ActorContext) extends Process
   }
 
   def updateState: UpdateFunction = {
-    case CounterPersistentProcess.CountIncremented ⇒ { state ⇒
-      markDone()
-      state + 1
-    }
+    case CounterPersistentProcess.CountIncremented ⇒ state ⇒ markDone(state + 1)
   }
 }
 
@@ -105,9 +102,6 @@ class DecrementProcessStep()(implicit val context: ActorContext) extends Process
   }
 
   def updateState: UpdateFunction = {
-    case CounterPersistentProcess.CountDecremented ⇒ { state ⇒
-      markDone()
-      state - 1
-    }
+    case CounterPersistentProcess.CountDecremented ⇒ state ⇒ markDone(state - 1)
   }
 }

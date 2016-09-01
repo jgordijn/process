@@ -31,10 +31,9 @@ object PersistentProcessTest {
     }
     def updateState: UpdateFunction = {
       case Completed(p) if p == probe.path.name ⇒ { state ⇒
-        markDone()
         val newState = state.copy(probeCalled = probe :: state.probeCalled)
         println(s"${probe.path.name}: newState: ${newState.probeCalled.map(_.path.name)}")
-        newState
+        markDone(newState)
       }
     }
     override def toString: String = s"Step: ${probe.path.name}"
@@ -52,9 +51,9 @@ object PersistentProcessTest {
 
     def updateState: UpdateFunction = {
       case Completed(_) ⇒ { state ⇒
-        markDone()
+
         println("init completed")
-        state
+        markDone(state)
       }
     }
 
