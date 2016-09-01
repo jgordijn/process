@@ -71,9 +71,11 @@ object PersistentProcessTest {
     var state = PersistentProcess1.State()
     val process = new InitStep() ~>
       Par(If[PersistentProcess1.State](_ ⇒ true)(new Step(probe1.ref)), new Step(probe2.ref)) ~>
-      new Choice(state ⇒ state.probeCalled.contains(probe1.ref),
+      new Choice(
+        state ⇒ state.probeCalled.contains(probe1.ref),
         new Step(probe3.ref) ~> new Step(probe4.ref),
-        new Step(probe5.ref)) ~>
+        new Step(probe5.ref)
+      ) ~>
       new Step(endProbe.ref)
 
     process.onComplete {
