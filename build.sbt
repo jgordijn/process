@@ -28,6 +28,8 @@ resolvers += Resolver.jcenterRepo
 
 scalariformSettings
 
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+
 ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignParameters, true)
     .setPreference(AlignSingleLineCaseStatements, true)
