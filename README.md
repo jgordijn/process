@@ -16,6 +16,9 @@ libraryDependencies += "processframework" %% "process" % "0.1.16"
 
 // akka 2.4.x
 libraryDependencies += "processframework" %% "process" % "0.1.17"
+
+// Change in organization name since 0.1.23
+libraryDependencies += "com.github.jgordijn" %% "process" % "0.1.23"
 ```
 
 For Maven and other build tools, you can visit search.maven.org

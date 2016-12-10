@@ -3,7 +3,7 @@ import scalariform.formatter.preferences._
 
 lazy val root = (project in file(".")).
   settings(
-    organization := "processframework",
+    organization := "com.github.jgordijn",
     name := "process",
     scalaVersion := "2.11.8",
     publishMavenStyle := true,
